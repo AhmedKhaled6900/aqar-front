@@ -1,6 +1,6 @@
 import { Building2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useMe } from '@/features/auth/useMe'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import { cn } from '@/lib/utils'
@@ -13,6 +13,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
   const { hasPermission } = useCookies()
   const { data } = useMe()
   const role = data?.user.role
@@ -43,14 +44,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 to={item.to}
                 end={item.end}
                 onClick={onClose}
-                className={({ isActive }) =>
-                  cn(
+                className={({ isActive }) => {
+                  const active =
+                    isActive || (item.isActiveMatch?.(pathname) ?? false)
+                  return cn(
                     'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                    isActive
+                    active
                       ? 'bg-white/15 text-white'
                       : 'text-white/70 hover:bg-white/10 hover:text-white',
                   )
-                }
+                }}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
                 {t(item.labelKey)}

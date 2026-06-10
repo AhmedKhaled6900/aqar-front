@@ -3,94 +3,118 @@ import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { normalizePaginatedResponse } from '@/lib/api/pagination'
 import type {
   AdminCategory,
-  CreateCategoryInput,
+  CreateSubcategoryInput,
   PaginatedResponse,
-  UpdateCategoryInput,
+  UpdateSubcategoryInput,
 } from '@/lib/types'
 
-export function useAdminCategories(
+export function useAdminSubcategories(
+  parentId: string,
   page = 1,
   limit = 20,
-  filters: { isActive?: boolean; parentId?: string } = {},
+  filters: { isActive?: boolean } = {},
 ) {
   const axios = useAxiosInstance()
 
   return useQuery({
-    queryKey: ['admin', 'categories', page, limit, filters],
+    queryKey: ['admin', 'subcategories', parentId, page, limit, filters],
     queryFn: async () => {
       const { data } = await axios.get<PaginatedResponse<AdminCategory>>(
-        '/admin/categories',
+        `/admin/categories/${parentId}/subcategories`,
         { params: { page, limit, ...filters } },
       )
       return data
     },
     select: (data) => normalizePaginatedResponse<AdminCategory>(data),
+    enabled: !!parentId,
   })
 }
 
-export function useAdminCategory(id: string) {
+export function useAdminSubcategory(id: string) {
   const axios = useAxiosInstance()
 
   return useQuery({
-    queryKey: ['admin', 'categories', id],
+    queryKey: ['admin', 'subcategories', 'detail', id],
     queryFn: async () => {
-      const { data } = await axios.get<AdminCategory>(`/admin/categories/${id}`)
+      const { data } = await axios.get<AdminCategory>(`/admin/subcategories/${id}`)
       return data
     },
     enabled: !!id,
   })
 }
 
-export function useCreateCategory() {
+export function useCreateSubcategory() {
   const axios = useAxiosInstance()
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (input: CreateCategoryInput) => {
+    mutationFn: async ({
+      parentId,
+      input,
+    }: {
+      parentId: string
+      input: CreateSubcategoryInput
+    }) => {
       const { data } = await axios.post<{ message: string; category: AdminCategory }>(
-        '/admin/categories',
+        `/admin/categories/${parentId}/subcategories`,
         input,
       )
       return data
     },
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'subcategories'] })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
       void queryClient.invalidateQueries({ queryKey: ['categories'] })
     },
   })
 }
 
-export function useUpdateCategory() {
+export function useUpdateSubcategory() {
   const axios = useAxiosInstance()
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: UpdateCategoryInput }) => {
+    mutationFn: async ({
+      id,
+      input,
+    }: {
+      id: string
+      input: UpdateSubcategoryInput
+    }) => {
       const { data } = await axios.patch<{ message: string; category: AdminCategory }>(
-        `/admin/categories/${id}`,
+        `/admin/subcategories/${id}`,
         input,
       )
       return data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['admin', 'subcategories', 'detail', data.category.id],
+      })
+      if (data.category.parentId) {
+        void queryClient.invalidateQueries({
+          queryKey: ['admin', 'subcategories', data.category.parentId],
+        })
+      }
       void queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
       void queryClient.invalidateQueries({ queryKey: ['categories'] })
     },
   })
 }
 
-export function useDeleteCategory() {
+export function useDeleteSubcategory() {
   const axios = useAxiosInstance()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
       const { data } = await axios.delete<{ message: string }>(
-        `/admin/categories/${id}`,
+        `/admin/subcategories/${id}`,
       )
       return data
     },
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'subcategories'] })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
       void queryClient.invalidateQueries({ queryKey: ['categories'] })
     },

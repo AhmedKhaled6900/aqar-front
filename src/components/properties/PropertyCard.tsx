@@ -39,7 +39,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             </Badge>
           </div>
           <p className="mb-2 text-lg font-bold text-main">
-            {formatPrice(Number(property.price), property.purpose)}
+            {formatPrice(Number(property.price), property.purpose, property.pricePeriod)}
           </p>
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4" />

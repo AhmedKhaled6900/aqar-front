@@ -56,7 +56,7 @@ export function PropertyDetailPage() {
 
         <div className="space-y-6">
           <p className="text-3xl font-bold text-main">
-            {formatPrice(Number(property.price), property.purpose)}
+            {formatPrice(Number(property.price), property.purpose, property.pricePeriod)}
           </p>
 
           <div className="flex flex-wrap gap-4 text-muted-foreground">

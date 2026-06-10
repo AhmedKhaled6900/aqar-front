@@ -21,7 +21,7 @@ import {
   useUploadPropertyImages,
   useUploadPropertyVideo,
 } from '@/features/properties/useProperties'
-import type { PropertyPurpose } from '@/lib/types'
+import type { PricePeriod, PropertyPurpose } from '@/lib/types'
 
 const emptyForm = {
   title: '',
@@ -36,6 +36,7 @@ const emptyForm = {
   bathrooms: '',
   areaSize: '',
   purpose: 'SALE' as PropertyPurpose,
+  pricePeriod: 'MONTH' as PricePeriod,
   categoryId: '',
 }
 
@@ -81,26 +82,35 @@ export function PropertyFormPage() {
         bathrooms: property.bathrooms != null ? String(property.bathrooms) : '',
         areaSize: property.areaSize != null ? String(property.areaSize) : '',
         purpose: property.purpose,
+        pricePeriod: property.pricePeriod ?? 'MONTH',
         categoryId: property.categoryId,
       })
     }
   }, [property])
 
-  const buildPayload = () => ({
-    title: form.title,
-    description: form.description,
-    price: Number(form.price),
-    city: form.city,
-    area: form.area,
-    address: form.address,
-    latitude: form.latitude ? Number(form.latitude) : undefined,
-    longitude: form.longitude ? Number(form.longitude) : undefined,
-    bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
-    bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
-    areaSize: form.areaSize ? Number(form.areaSize) : undefined,
-    purpose: form.purpose,
-    categoryId: form.categoryId,
-  })
+  const buildPayload = () => {
+    const base = {
+      title: form.title,
+      description: form.description,
+      price: Number(form.price),
+      city: form.city,
+      area: form.area,
+      address: form.address,
+      latitude: form.latitude ? Number(form.latitude) : undefined,
+      longitude: form.longitude ? Number(form.longitude) : undefined,
+      bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
+      bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
+      areaSize: form.areaSize ? Number(form.areaSize) : undefined,
+      purpose: form.purpose,
+      categoryId: form.categoryId,
+    }
+
+    if (form.purpose === 'RENT') {
+      return { ...base, pricePeriod: form.pricePeriod }
+    }
+
+    return base
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -204,7 +214,10 @@ export function PropertyFormPage() {
               className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               value={form.purpose}
               onChange={(e) =>
-                setForm({ ...form, purpose: e.target.value as PropertyPurpose })
+                setForm({
+                  ...form,
+                  purpose: e.target.value as PropertyPurpose,
+                })
               }
             >
               <option value="SALE">{t('home.sale')}</option>
@@ -212,6 +225,24 @@ export function PropertyFormPage() {
             </select>
           </div>
         </div>
+
+        {form.purpose === 'RENT' && (
+          <div>
+            <Label>{t('properties.pricePeriod')}</Label>
+            <select
+              className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              value={form.pricePeriod}
+              onChange={(e) =>
+                setForm({ ...form, pricePeriod: e.target.value as PricePeriod })
+              }
+              required
+            >
+              <option value="DAY">{t('properties.pricePeriodDay')}</option>
+              <option value="MONTH">{t('properties.pricePeriodMonth')}</option>
+              <option value="YEAR">{t('properties.pricePeriodYear')}</option>
+            </select>
+          </div>
+        )}
 
         <div>
           <Label>{t('properties.category')}</Label>

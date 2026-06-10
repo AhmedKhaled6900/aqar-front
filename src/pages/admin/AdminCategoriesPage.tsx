@@ -1,6 +1,7 @@
-import { FolderTree, Pencil, Plus, Trash2 } from 'lucide-react'
+import { FolderTree, Layers, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { CategoryFormDialog } from '@/components/categories/CategoryFormDialog'
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table'
 import { Alert } from '@/components/ui/alert'
@@ -13,11 +14,8 @@ import {
 } from '@/features/categories/useAdminCategories'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import type { AdminCategory } from '@/lib/types'
-import { cn } from '@/lib/utils'
 
 const PAGE_SIZE = 20
-
-type TableRow = AdminCategory & { isSubcategory?: boolean; parentName?: string }
 
 export function AdminCategoriesPage() {
   const { t } = useTranslation()
@@ -26,10 +24,6 @@ export function AdminCategoriesPage() {
   const [isActiveFilter, setIsActiveFilter] = useState<'all' | 'true' | 'false'>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null)
-  const [parentForCreate, setParentForCreate] = useState<{
-    id: string
-    name: string
-  } | null>(null)
   const [error, setError] = useState('')
 
   const filters = {
@@ -44,37 +38,15 @@ export function AdminCategoriesPage() {
   const canCreate = hasPermission('category.create')
   const canUpdate = hasPermission('category.update')
   const canDelete = hasPermission('category.delete')
-
-  const tableRows = useMemo(() => {
-    const rows: TableRow[] = []
-    for (const main of data?.items ?? []) {
-      rows.push(main)
-      for (const sub of main.subcategories ?? []) {
-        rows.push({
-          ...sub,
-          isSubcategory: true,
-          parentName: main.name,
-        })
-      }
-    }
-    return rows
-  }, [data?.items])
+  const canReadSubs = hasPermission('category.read')
 
   const openCreateMain = () => {
     setEditingCategory(null)
-    setParentForCreate(null)
-    setDialogOpen(true)
-  }
-
-  const openCreateSub = (parent: AdminCategory) => {
-    setEditingCategory(null)
-    setParentForCreate({ id: parent.id, name: parent.name })
     setDialogOpen(true)
   }
 
   const openEdit = (category: AdminCategory) => {
     setEditingCategory(category)
-    setParentForCreate(null)
     setDialogOpen(true)
   }
 
@@ -89,21 +61,12 @@ export function AdminCategoriesPage() {
     }
   }
 
-  const columns = useMemo<DataTableColumn<TableRow>[]>(
+  const columns = useMemo<DataTableColumn<AdminCategory>[]>(
     () => [
       {
         id: 'name',
         header: t('categories.name'),
-        cell: (row) => (
-          <div className={cn(row.isSubcategory && 'pr-6')}>
-            <span className="font-medium">{row.name}</span>
-            {row.isSubcategory && row.parentName && (
-              <p className="text-xs text-muted-foreground">
-                {t('categories.subOf', { name: row.parentName })}
-              </p>
-            )}
-          </div>
-        ),
+        cell: (row) => <span className="font-medium">{row.name}</span>,
       },
       {
         id: 'slug',
@@ -111,13 +74,20 @@ export function AdminCategoriesPage() {
         cell: (row) => <span dir="ltr">{row.slug}</span>,
       },
       {
-        id: 'type',
-        header: t('categories.type'),
-        cell: (row) => (
-          <Badge variant={row.isSubcategory ? 'secondary' : 'default'}>
-            {row.isSubcategory ? t('categories.subcategory') : t('categories.main')}
-          </Badge>
-        ),
+        id: 'subcategories',
+        header: t('categories.subcategories'),
+        cell: (row) => {
+          const count = row.subcategoryCount ?? row.subcategories?.length ?? 0
+          if (!canReadSubs) return count
+          return (
+            <Button variant="link" className="h-auto p-0" asChild>
+              <Link to={`/admin/subcategories?parentId=${row.id}`}>
+                <Layers className="h-4 w-4" />
+                {t('categories.manageSubcategories', { count })}
+              </Link>
+            </Button>
+          )
+        },
       },
       {
         id: 'sortOrder',
@@ -136,19 +106,9 @@ export function AdminCategoriesPage() {
       {
         id: 'actions',
         header: t('common.actions'),
-        className: 'w-[200px]',
+        className: 'w-[120px]',
         cell: (row) => (
           <div className="flex flex-wrap gap-1">
-            {!row.isSubcategory && canCreate && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => openCreateSub(row)}
-                title={t('categories.addSubcategory')}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
             {canUpdate && (
               <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
                 <Pencil className="h-4 w-4" />
@@ -169,7 +129,7 @@ export function AdminCategoriesPage() {
         ),
       },
     ],
-    [t, canCreate, canUpdate, canDelete, deleteMutation.isPending],
+    [t, canReadSubs, canUpdate, canDelete, deleteMutation.isPending],
   )
 
   return (
@@ -210,7 +170,7 @@ export function AdminCategoriesPage() {
 
       <DataTable
         columns={columns}
-        data={tableRows}
+        data={data?.items ?? []}
         meta={data?.meta}
         isLoading={isLoading}
         onPageChange={setPage}
@@ -221,8 +181,6 @@ export function AdminCategoriesPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         category={editingCategory}
-        parentId={parentForCreate?.id}
-        parentName={parentForCreate?.name}
       />
     </div>
   )

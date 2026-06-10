@@ -4,6 +4,7 @@ import {
   ClipboardList,
   FolderTree,
   Home,
+  Layers,
   LayoutDashboard,
   Plus,
   ShieldCheck,
@@ -19,6 +20,7 @@ export interface NavItem {
   icon: LucideIcon
   end?: boolean
   permission?: string
+  isActiveMatch?: (pathname: string) => boolean
 }
 
 export interface NavSection {
@@ -87,6 +89,14 @@ export const navSections: NavSection[] = [
         labelKey: 'nav.adminCategories',
         icon: FolderTree,
         permission: 'category.read',
+        end: true,
+      },
+      {
+        to: '/admin/subcategories',
+        labelKey: 'nav.adminSubcategories',
+        icon: Layers,
+        permission: 'category.read',
+        end: true,
       },
     ],
   },

@@ -5,12 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatPrice(price: number, purpose: 'SALE' | 'RENT') {
+const pricePeriodSuffix: Record<string, string> = {
+  DAY: 'يوم',
+  MONTH: 'شهر',
+  YEAR: 'سنة',
+}
+
+export function formatPrice(
+  price: number,
+  purpose: 'SALE' | 'RENT',
+  pricePeriod?: string | null,
+) {
   const formatted = new Intl.NumberFormat('ar-EG', {
     style: 'currency',
     currency: 'EGP',
     maximumFractionDigits: 0,
   }).format(price)
 
-  return purpose === 'RENT' ? `${formatted} / شهر` : formatted
+  if (purpose !== 'RENT') return formatted
+
+  const period = pricePeriod ? pricePeriodSuffix[pricePeriod] : 'شهر'
+  return `${formatted} / ${period}`
 }

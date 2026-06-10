@@ -37,7 +37,12 @@ export function PendingPropertiesPage() {
                   <div className="flex-1">
                     <h3 className="font-semibold">{property.title}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {formatPrice(Number(property.price), property.purpose)} —{' '}
+                      {formatPrice(
+                        Number(property.price),
+                        property.purpose,
+                        property.pricePeriod,
+                      )}{' '}
+                      —{' '}
                       {property.city}
                     </p>
                     <p className="text-sm">{property.owner?.name}</p>

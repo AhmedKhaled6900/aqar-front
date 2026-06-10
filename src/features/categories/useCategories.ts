@@ -38,3 +38,56 @@ export function flattenSubcategories(categories: Category[] | unknown) {
     Array.isArray(cat.subcategories) ? cat.subcategories : [],
   )
 }
+
+export interface SubcategoryListItem extends Category {
+  parentName: string
+}
+
+export function flattenSubcategoriesWithParent(
+  categories: Category[] | unknown,
+  parentIdFilter?: string,
+): SubcategoryListItem[] {
+  const list = extractPaginatedItems<Category>(categories)
+  const items = list.flatMap((main) =>
+    (main.subcategories ?? []).map((sub) => ({
+      ...sub,
+      parentId: sub.parentId ?? main.id,
+      parentName: main.name,
+    })),
+  )
+
+  if (!parentIdFilter) return items
+  return items.filter((sub) => sub.parentId === parentIdFilter)
+}
+
+export function useAllSubcategories(parentIdFilter?: string) {
+  const axios = useAxiosInstance()
+
+  return useQuery({
+    queryKey: ['categories', 'all-subcategories', parentIdFilter],
+    queryFn: async () => {
+      const { data } = await axios.get<PaginatedResponse<Category> | Category[]>(
+        '/categories',
+        { params: { page: 1, limit: 100 } },
+      )
+      return data
+    },
+    select: (data) => flattenSubcategoriesWithParent(data, parentIdFilter),
+  })
+}
+
+export function useMainCategories() {
+  const axios = useAxiosInstance()
+
+  return useQuery({
+    queryKey: ['categories', 'main'],
+    queryFn: async () => {
+      const { data } = await axios.get<PaginatedResponse<Category> | Category[]>(
+        '/categories',
+        { params: { page: 1, limit: 100 } },
+      )
+      return data
+    },
+    select: (data) => extractPaginatedItems<Category>(data),
+  })
+}

@@ -63,7 +63,12 @@ export function OwnerDashboardPage() {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {formatPrice(Number(property.price), property.purpose)} —{' '}
+                    {formatPrice(
+                      Number(property.price),
+                      property.purpose,
+                      property.pricePeriod,
+                    )}{' '}
+                    —{' '}
                     {property.city}
                   </p>
                   {property.rejectionReason && (

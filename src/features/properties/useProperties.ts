@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { normalizePaginatedResponse } from '@/lib/api/pagination'
-import type { PaginatedResponse, Property, PropertyPurpose } from '@/lib/types'
+import type {
+  PaginatedResponse,
+  PricePeriod,
+  Property,
+  PropertyPurpose,
+} from '@/lib/types'
 
 export interface PropertyFilters {
   purpose?: PropertyPurpose
@@ -53,6 +58,7 @@ export interface CreatePropertyInput {
   bathrooms?: number
   areaSize?: number
   purpose: PropertyPurpose
+  pricePeriod?: PricePeriod
   categoryId: string
 }
 

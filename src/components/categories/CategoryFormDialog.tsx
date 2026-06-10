@@ -22,8 +22,6 @@ interface CategoryFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   category?: AdminCategory | null
-  parentId?: string
-  parentName?: string
 }
 
 const emptyForm: CreateCategoryInput = {
@@ -38,8 +36,6 @@ export function CategoryFormDialog({
   open,
   onOpenChange,
   category,
-  parentId,
-  parentName,
 }: CategoryFormDialogProps) {
   const { t } = useTranslation()
   const createMutation = useCreateCategory()
@@ -59,10 +55,10 @@ export function CategoryFormDialog({
         isActive: category.isActive,
       })
     } else {
-      setForm({ ...emptyForm, parentId })
+      setForm(emptyForm)
     }
     setError('')
-  }, [open, category, parentId])
+  }, [open, category])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,7 +80,6 @@ export function CategoryFormDialog({
         await createMutation.mutateAsync({
           ...form,
           description: form.description || undefined,
-          parentId: parentId ?? form.parentId,
         })
       }
       onOpenChange(false)
@@ -101,17 +96,8 @@ export function CategoryFormDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isEdit
-              ? t('categories.edit')
-              : parentId
-                ? t('categories.addSubcategory')
-                : t('categories.addMain')}
+            {isEdit ? t('categories.edit') : t('categories.addMain')}
           </DialogTitle>
-          {parentName && (
-            <p className="text-sm text-muted-foreground">
-              {t('categories.parent')}: {parentName}
-            </p>
-          )}
         </DialogHeader>
 
         {error && <Alert variant="destructive">{error}</Alert>}

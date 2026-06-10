@@ -13,6 +13,8 @@ export type OwnerPendingType = 'KYC_REVIEW' | 'EMAIL_NOT_VERIFIED'
 
 export type PropertyPurpose = 'SALE' | 'RENT'
 
+export type PricePeriod = 'DAY' | 'MONTH' | 'YEAR'
+
 export type PropertyStatus =
   | 'DRAFT'
   | 'PENDING'
@@ -66,6 +68,7 @@ export interface Property {
   bathrooms?: number | null
   areaSize?: number | null
   purpose: PropertyPurpose
+  pricePeriod?: PricePeriod | null
   status: PropertyStatus
   categoryId: string
   category: {
@@ -135,6 +138,9 @@ export interface UpdateCategoryInput {
   sortOrder?: number
   isActive?: boolean
 }
+
+export type CreateSubcategoryInput = Omit<CreateCategoryInput, 'parentId'>
+export type UpdateSubcategoryInput = UpdateCategoryInput
 
 export type NotificationType =
   | 'USER_REGISTERED'
