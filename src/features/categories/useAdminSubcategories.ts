@@ -8,25 +8,23 @@ import type {
   UpdateSubcategoryInput,
 } from '@/lib/types'
 
-export function useAdminSubcategories(
-  parentId: string,
+export function useAdminSubcategoriesList(
   page = 1,
   limit = 20,
-  filters: { isActive?: boolean } = {},
+  filters: { parentId?: string; isActive?: boolean } = {},
 ) {
   const axios = useAxiosInstance()
 
   return useQuery({
-    queryKey: ['admin', 'subcategories', parentId, page, limit, filters],
+    queryKey: ['admin', 'subcategories', 'list', page, limit, filters],
     queryFn: async () => {
       const { data } = await axios.get<PaginatedResponse<AdminCategory>>(
-        `/admin/categories/${parentId}/subcategories`,
+        '/admin/subcategories',
         { params: { page, limit, ...filters } },
       )
       return data
     },
     select: (data) => normalizePaginatedResponse<AdminCategory>(data),
-    enabled: !!parentId,
   })
 }
 
@@ -56,8 +54,8 @@ export function useCreateSubcategory() {
       input: CreateSubcategoryInput
     }) => {
       const { data } = await axios.post<{ message: string; category: AdminCategory }>(
-        `/admin/categories/${parentId}/subcategories`,
-        input,
+        '/admin/subcategories',
+        { parentId, ...input },
       )
       return data
     },
@@ -91,11 +89,7 @@ export function useUpdateSubcategory() {
       void queryClient.invalidateQueries({
         queryKey: ['admin', 'subcategories', 'detail', data.category.id],
       })
-      if (data.category.parentId) {
-        void queryClient.invalidateQueries({
-          queryKey: ['admin', 'subcategories', data.category.parentId],
-        })
-      }
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'subcategories', 'list'] })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
       void queryClient.invalidateQueries({ queryKey: ['categories'] })
     },

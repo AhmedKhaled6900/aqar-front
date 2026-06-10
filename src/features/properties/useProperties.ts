@@ -59,7 +59,8 @@ export interface CreatePropertyInput {
   areaSize?: number
   purpose: PropertyPurpose
   pricePeriod?: PricePeriod
-  categoryId: string
+  parentCategoryId: string
+  subcategoryId?: string
 }
 
 export function useCreateProperty() {

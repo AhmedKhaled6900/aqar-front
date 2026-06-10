@@ -5,19 +5,20 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SubcategoryFormDialog } from '@/components/categories/SubcategoryFormDialog'
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table'
 import { Alert } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
+import { useAdminCategories } from '@/features/categories/useAdminCategories'
 import {
-  useAllSubcategories,
-  useMainCategories,
-  type SubcategoryListItem,
-} from '@/features/categories/useCategories'
-import { useDeleteSubcategory } from '@/features/categories/useAdminSubcategories'
+  useAdminSubcategoriesList,
+  useDeleteSubcategory,
+} from '@/features/categories/useAdminSubcategories'
 import { useCookies } from '@/lib/token-managament/useCookies'
-import type { PaginationMeta } from '@/lib/types'
+import type { AdminCategory } from '@/lib/types'
 
 const PAGE_SIZE = 20
+const MAIN_CATEGORIES_LIMIT = 100
 
 export function AdminSubcategoriesPage() {
   const { t } = useTranslation()
@@ -27,36 +28,28 @@ export function AdminSubcategoriesPage() {
 
   const { hasPermission } = useCookies()
   const [page, setPage] = useState(1)
+  const [isActiveFilter, setIsActiveFilter] = useState<'all' | 'true' | 'false'>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingSubcategoryId, setEditingSubcategoryId] = useState<string | null>(null)
   const [error, setError] = useState('')
 
-  const { data: mainCategories = [], isLoading: loadingMain } = useMainCategories()
-  const { data: allSubcategories = [], isLoading } = useAllSubcategories(parentIdFilter)
+  const listFilters = {
+    ...(parentIdFilter ? { parentId: parentIdFilter } : {}),
+    ...(isActiveFilter !== 'all'
+      ? { isActive: isActiveFilter === 'true' }
+      : {}),
+  }
+
+  const { data: mainCategories, isLoading: loadingMain } = useAdminCategories(
+    1,
+    MAIN_CATEGORIES_LIMIT,
+  )
+  const { data, isLoading } = useAdminSubcategoriesList(page, PAGE_SIZE, listFilters)
   const deleteMutation = useDeleteSubcategory()
 
   const canCreate = hasPermission('category.create')
   const canUpdate = hasPermission('category.update')
   const canDelete = hasPermission('category.delete')
-
-  const { items, meta } = useMemo(() => {
-    const total = allSubcategories.length
-    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-    const currentPage = Math.min(page, totalPages)
-    const start = (currentPage - 1) * PAGE_SIZE
-    const paginatedItems = allSubcategories.slice(start, start + PAGE_SIZE)
-
-    const paginationMeta: PaginationMeta = {
-      total,
-      page: currentPage,
-      limit: PAGE_SIZE,
-      totalPages,
-      hasNextPage: currentPage < totalPages,
-      hasPreviousPage: currentPage > 1,
-    }
-
-    return { items: paginatedItems, meta: paginationMeta }
-  }, [allSubcategories, page])
 
   const handleParentFilterChange = (nextParentId: string) => {
     setPage(1)
@@ -72,7 +65,7 @@ export function AdminSubcategoriesPage() {
     setDialogOpen(true)
   }
 
-  const openEdit = (subcategory: SubcategoryListItem) => {
+  const openEdit = (subcategory: AdminCategory) => {
     setEditingSubcategoryId(subcategory.id)
     setDialogOpen(true)
   }
@@ -88,7 +81,7 @@ export function AdminSubcategoriesPage() {
     }
   }
 
-  const columns = useMemo<DataTableColumn<SubcategoryListItem>[]>(
+  const columns = useMemo<DataTableColumn<AdminCategory>[]>(
     () => [
       {
         id: 'name',
@@ -98,7 +91,7 @@ export function AdminSubcategoriesPage() {
       {
         id: 'parent',
         header: t('categories.parent'),
-        cell: (row) => row.parentName,
+        cell: (row) => row.parent?.name ?? '—',
       },
       {
         id: 'slug',
@@ -109,6 +102,20 @@ export function AdminSubcategoriesPage() {
         id: 'sortOrder',
         header: t('categories.sortOrder'),
         cell: (row) => row.sortOrder,
+      },
+      {
+        id: 'properties',
+        header: t('categories.propertyCount'),
+        cell: (row) => row.propertyCount ?? 0,
+      },
+      {
+        id: 'isActive',
+        header: t('categories.isActive'),
+        cell: (row) => (
+          <Badge variant={row.isActive ? 'success' : 'destructive'}>
+            {row.isActive ? t('common.yes') : t('common.no')}
+          </Badge>
+        ),
       },
       {
         id: 'actions',
@@ -156,7 +163,7 @@ export function AdminSubcategoriesPage() {
             {t('categories.subcategoriesTitle')}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t('categories.subcategoriesAllDesc', { count: allSubcategories.length })}
+            {t('categories.subcategoriesAllDesc', { count: data?.meta.total ?? 0 })}
           </p>
         </div>
         {canCreate && (
@@ -169,26 +176,43 @@ export function AdminSubcategoriesPage() {
 
       {error && <Alert variant="destructive">{error}</Alert>}
 
-      <div className="max-w-xs">
-        <Label>{t('categories.filterByParent')}</Label>
-        <select
-          className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-          value={parentIdFilter ?? ''}
-          onChange={(e) => handleParentFilterChange(e.target.value)}
-        >
-          <option value="">{t('common.all')}</option>
-          {mainCategories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <Label>{t('categories.filterByParent')}</Label>
+          <select
+            className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            value={parentIdFilter ?? ''}
+            onChange={(e) => handleParentFilterChange(e.target.value)}
+          >
+            <option value="">{t('common.all')}</option>
+            {mainCategories?.items.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <Label>{t('categories.isActive')}</Label>
+          <select
+            className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+            value={isActiveFilter}
+            onChange={(e) => {
+              setIsActiveFilter(e.target.value as typeof isActiveFilter)
+              setPage(1)
+            }}
+          >
+            <option value="all">{t('common.all')}</option>
+            <option value="true">{t('common.yes')}</option>
+            <option value="false">{t('common.no')}</option>
+          </select>
+        </div>
       </div>
 
       <DataTable
         columns={columns}
-        data={items}
-        meta={meta}
+        data={data?.items ?? []}
+        meta={data?.meta}
         emptyMessage={t('categories.noSubcategories')}
         onPageChange={setPage}
         getRowKey={(row) => row.id}
@@ -199,7 +223,7 @@ export function AdminSubcategoriesPage() {
         onOpenChange={setDialogOpen}
         subcategoryId={editingSubcategoryId}
         defaultParentId={parentIdFilter}
-        mainCategories={mainCategories}
+        mainCategories={mainCategories?.items ?? []}
       />
     </div>
   )

@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
 import {
-  flattenSubcategories,
-  useCategories,
+  useCategorySelectMenu,
+  useSubcategorySelectMenu,
 } from '@/features/categories/useCategories'
 import {
   useCreateProperty,
@@ -37,7 +37,8 @@ const emptyForm = {
   areaSize: '',
   purpose: 'SALE' as PropertyPurpose,
   pricePeriod: 'MONTH' as PricePeriod,
-  categoryId: '',
+  parentCategoryId: '',
+  subcategoryId: '',
 }
 
 export function PropertyFormPage() {
@@ -48,7 +49,7 @@ export function PropertyFormPage() {
   const isAdmin = location.pathname.startsWith('/admin/properties')
   const listPath = isAdmin ? '/admin/properties' : '/owner/dashboard'
   const isEdit = !!id
-  const { data: categories = [] } = useCategories()
+  const { data: parentCategories = [] } = useCategorySelectMenu()
   const { data: property, isLoading: loadingProperty } = useProperty(id ?? '')
   const createMutation = useCreateProperty()
   const updateMutation = useUpdateProperty(id ?? '')
@@ -58,14 +59,16 @@ export function PropertyFormPage() {
   const deleteVideo = useDeletePropertyVideo(id ?? '')
   const submitMutation = useSubmitProperty()
   const [form, setForm] = useState(emptyForm)
+  const { data: subcategories = [] } = useSubcategorySelectMenu(
+    form.parentCategoryId,
+    isAdmin,
+  )
   const [images, setImages] = useState<File[]>([])
   const [video, setVideo] = useState<File | null>(null)
   const [error, setError] = useState('')
 
   const canEditMedia =
     property?.status === 'DRAFT' || property?.status === 'REJECTED'
-
-  const subcategories = flattenSubcategories(categories)
 
   useEffect(() => {
     if (property) {
@@ -83,7 +86,12 @@ export function PropertyFormPage() {
         areaSize: property.areaSize != null ? String(property.areaSize) : '',
         purpose: property.purpose,
         pricePeriod: property.pricePeriod ?? 'MONTH',
-        categoryId: property.categoryId,
+        parentCategoryId:
+          property.parentCategoryId ??
+          property.parentCategory?.id ??
+          property.category.parentId ??
+          '',
+        subcategoryId: property.subcategoryId ?? property.categoryId ?? '',
       })
     }
   }, [property])
@@ -102,7 +110,8 @@ export function PropertyFormPage() {
       bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
       areaSize: form.areaSize ? Number(form.areaSize) : undefined,
       purpose: form.purpose,
-      categoryId: form.categoryId,
+      parentCategoryId: form.parentCategoryId,
+      ...(form.subcategoryId ? { subcategoryId: form.subcategoryId } : {}),
     }
 
     if (form.purpose === 'RENT') {
@@ -244,21 +253,49 @@ export function PropertyFormPage() {
           </div>
         )}
 
-        <div>
-          <Label>{t('properties.category')}</Label>
-          <select
-            className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-            value={form.categoryId}
-            onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-            required
-          >
-            <option value="">—</option>
-            {subcategories.map((sub) => (
-              <option key={sub.id} value={sub.id}>
-                {sub.name}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label>{t('properties.parentCategory')}</Label>
+            <select
+              className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              value={form.parentCategoryId}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  parentCategoryId: e.target.value,
+                  subcategoryId: '',
+                })
+              }
+              required
+            >
+              <option value="">{t('properties.selectParentCategory')}</option>
+              {parentCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {form.parentCategoryId && (
+            <div>
+              <Label>{t('properties.subcategory')}</Label>
+              <select
+                className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                value={form.subcategoryId}
+                onChange={(e) =>
+                  setForm({ ...form, subcategoryId: e.target.value })
+                }
+              >
+                <option value="">{t('properties.selectSubcategoryOptional')}</option>
+                {subcategories.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

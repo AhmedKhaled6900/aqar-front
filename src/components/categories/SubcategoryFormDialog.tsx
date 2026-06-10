@@ -17,14 +17,14 @@ import {
   useCreateSubcategory,
   useUpdateSubcategory,
 } from '@/features/categories/useAdminSubcategories'
-import type { Category, CreateSubcategoryInput } from '@/lib/types'
+import type { AdminCategory, CreateSubcategoryInput } from '@/lib/types'
 
 interface SubcategoryFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   subcategoryId?: string | null
   defaultParentId?: string
-  mainCategories?: Category[]
+  mainCategories?: AdminCategory[]
 }
 
 const emptyForm: CreateSubcategoryInput = {

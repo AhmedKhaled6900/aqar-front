@@ -70,6 +70,15 @@ export interface Property {
   purpose: PropertyPurpose
   pricePeriod?: PricePeriod | null
   status: PropertyStatus
+  parentCategoryId?: string
+  parentCategory?: { id: string; name: string; slug: string } | null
+  subcategoryId?: string
+  subcategory?: {
+    id: string
+    name: string
+    slug: string
+    parentId: string | null
+  }
   categoryId: string
   category: {
     id: string
@@ -111,6 +120,26 @@ export interface Category {
   parent?: { id: string; name: string; slug: string } | null
   sortOrder: number
   subcategories?: Category[]
+}
+
+export interface CategorySelectMenuItem {
+  id: string
+  name: string
+  slug: string
+  description?: string | null
+  sortOrder: number
+  isActive?: boolean
+  subcategories?: CategorySelectMenuItem[]
+}
+
+export interface SubcategorySelectMenuItem {
+  id: string
+  name: string
+  slug: string
+  description?: string | null
+  parentId: string | null
+  sortOrder: number
+  parent?: { id: string; name: string; slug: string } | null
 }
 
 export interface AdminCategory extends Category {

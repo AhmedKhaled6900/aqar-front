@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { extractPaginatedItems } from '@/lib/api/pagination'
-import type { Category, PaginatedResponse } from '@/lib/types'
+import type {
+  Category,
+  CategorySelectMenuItem,
+  PaginatedResponse,
+  SubcategorySelectMenuItem,
+} from '@/lib/types'
 
 export function useCategories(limit = 100) {
   const axios = useAxiosInstance()
@@ -73,6 +78,39 @@ export function useAllSubcategories(parentIdFilter?: string) {
       return data
     },
     select: (data) => flattenSubcategoriesWithParent(data, parentIdFilter),
+  })
+}
+
+export function useCategorySelectMenu() {
+  const axios = useAxiosInstance()
+
+  return useQuery({
+    queryKey: ['categories', 'select-menu'],
+    queryFn: async () => {
+      const { data } = await axios.get<{ items: CategorySelectMenuItem[] }>(
+        '/categories/select-menu',
+      )
+      return data.items
+    },
+  })
+}
+
+export function useSubcategorySelectMenu(parentId: string, admin = false) {
+  const axios = useAxiosInstance()
+
+  return useQuery({
+    queryKey: ['subcategories', 'select-menu', parentId, admin],
+    queryFn: async () => {
+      const url = admin
+        ? '/admin/subcategories/select-menu'
+        : '/subcategories/select-menu'
+      const { data } = await axios.get<{ items: SubcategorySelectMenuItem[] }>(
+        url,
+        { params: { parentId } },
+      )
+      return data.items
+    },
+    enabled: !!parentId,
   })
 }
 
