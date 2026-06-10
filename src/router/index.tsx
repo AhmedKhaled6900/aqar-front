@@ -1,0 +1,131 @@
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { AuthLayout } from '@/components/layout/AuthLayout'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { AdminCategoriesPage } from '@/pages/admin/AdminCategoriesPage'
+import { AdminOwnerDetailPage } from '@/pages/admin/AdminOwnerDetailPage'
+import { AdminOwnerListDetailPage } from '@/pages/admin/AdminOwnerListDetailPage'
+import { AdminOwnersPage } from '@/pages/admin/AdminOwnersPage'
+import { AdminPropertiesPage } from '@/pages/admin/AdminPropertiesPage'
+import { PendingOwnersPage } from '@/pages/admin/PendingOwnersPage'
+import { PendingPropertiesPage } from '@/pages/admin/PendingPropertiesPage'
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
+import { LoginPage } from '@/pages/auth/LoginPage'
+import { RegisterPage } from '@/pages/auth/RegisterPage'
+import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage'
+import { CompleteProfilePage } from '@/pages/owner/CompleteProfilePage'
+import { OwnerDashboardPage } from '@/pages/owner/OwnerDashboardPage'
+import { OwnerProfilePage } from '@/pages/owner/OwnerProfilePage'
+import { PendingReviewPage } from '@/pages/owner/PendingReviewPage'
+import { PropertyFormPage } from '@/pages/owner/PropertyFormPage'
+import { HomePage } from '@/pages/public/HomePage'
+import { PropertiesPage } from '@/pages/public/PropertiesPage'
+import { PropertyDetailPage } from '@/pages/public/PropertyDetailPage'
+import { ProtectedRoute } from '@/router/ProtectedRoute'
+import { PermissionGuard } from '@/routes/PermissionGuard'
+import { RoleGuard } from '@/routes/RoleGuard'
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <DashboardLayout />,
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: 'properties', element: <PropertiesPage /> },
+      { path: 'properties/:id', element: <PropertyDetailPage /> },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <RoleGuard roles={['OWNER']} />,
+            children: [
+              { path: 'owner/dashboard', element: <OwnerDashboardPage /> },
+              { path: 'owner/pending-review', element: <PendingReviewPage /> },
+              {
+                element: <PermissionGuard permission="owner.profile.read" />,
+                children: [{ path: 'owner/profile', element: <OwnerProfilePage /> }],
+              },
+              {
+                element: <PermissionGuard permission="owner.profile.update" />,
+                children: [
+                  { path: 'owner/complete-profile', element: <CompleteProfilePage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="property.create" />,
+                children: [
+                  { path: 'owner/properties/new', element: <PropertyFormPage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="property.update" />,
+                children: [
+                  {
+                    path: 'owner/properties/:id/edit',
+                    element: <PropertyFormPage />,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            element: <RoleGuard roles={['ADMIN']} />,
+            children: [
+              {
+                element: <PermissionGuard permission="owner.review" />,
+                children: [
+                  {
+                    path: 'admin/owners/pending/:userId',
+                    element: <AdminOwnerDetailPage />,
+                  },
+                  { path: 'admin/owners/pending', element: <PendingOwnersPage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="users.read" />,
+                children: [
+                  { path: 'admin/owners', element: <AdminOwnersPage /> },
+                  {
+                    path: 'admin/owners/:userId',
+                    element: <AdminOwnerListDetailPage />,
+                  },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="property.review" />,
+                children: [
+                  {
+                    path: 'admin/properties/pending',
+                    element: <PendingPropertiesPage />,
+                  },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="property.read" />,
+                children: [
+                  { path: 'admin/properties', element: <AdminPropertiesPage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="category.read" />,
+                children: [
+                  { path: 'admin/categories', element: <AdminCategoriesPage /> },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: '/auth',
+    element: <AuthLayout />,
+    children: [
+      { index: true, element: <Navigate to="/auth/login" replace /> },
+      { path: 'login', element: <LoginPage /> },
+      { path: 'register', element: <RegisterPage /> },
+      { path: 'verify-email', element: <VerifyEmailPage /> },
+      { path: 'forgot-password', element: <ForgotPasswordPage /> },
+    ],
+  },
+])
