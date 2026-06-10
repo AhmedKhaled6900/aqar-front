@@ -80,6 +80,7 @@ export interface Property {
   submittedAt?: string | null
   approvedAt?: string | null
   images: PropertyImage[]
+  videoUrl?: string | null
   createdAt: string
   updatedAt: string
 }

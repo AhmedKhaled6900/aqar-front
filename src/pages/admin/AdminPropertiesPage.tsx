@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { useAdminProperties } from '@/features/admin/useAdmin'
+import { useCookies } from '@/lib/token-managament/useCookies'
 import type { PropertyStatus } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
 
@@ -21,13 +23,25 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'warning' | 'destr
 
 export function AdminPropertiesPage() {
   const { t } = useTranslation()
+  const { hasPermission } = useCookies()
   const [status, setStatus] = useState<PropertyStatus | ''>('')
   const [page, setPage] = useState(1)
   const { data, isLoading } = useAdminProperties(status || undefined, page)
+  const canCreate = hasPermission('property.create')
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">{t('admin.allProperties')}</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">{t('admin.allProperties')}</h1>
+        {canCreate && (
+          <Button asChild>
+            <Link to="/admin/properties/new">
+              <Plus className="h-4 w-4" />
+              {t('nav.addProperty')}
+            </Link>
+          </Button>
+        )}
+      </div>
 
       <select
         className="mb-6 flex h-10 w-full max-w-xs rounded-md border border-border bg-background px-3 text-sm"

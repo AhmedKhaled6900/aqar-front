@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
-import { useCategories } from '@/features/categories/useCategories'
+import {
+  flattenSubcategories,
+  useCategories,
+} from '@/features/categories/useCategories'
 import {
   useCreateProperty,
   useDeletePropertyImage,
+  useDeletePropertyVideo,
   useProperty,
   useSubmitProperty,
   useUpdateProperty,
   useUploadPropertyImages,
+  useUploadPropertyVideo,
 } from '@/features/properties/useProperties'
 import type { PropertyPurpose } from '@/lib/types'
 
@@ -37,7 +42,10 @@ const emptyForm = {
 export function PropertyFormPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
+  const isAdmin = location.pathname.startsWith('/admin/properties')
+  const listPath = isAdmin ? '/admin/properties' : '/owner/dashboard'
   const isEdit = !!id
   const { data: categories = [] } = useCategories()
   const { data: property, isLoading: loadingProperty } = useProperty(id ?? '')
@@ -45,12 +53,18 @@ export function PropertyFormPage() {
   const updateMutation = useUpdateProperty(id ?? '')
   const uploadImages = useUploadPropertyImages(id ?? '')
   const deleteImage = useDeletePropertyImage(id ?? '')
+  const uploadVideo = useUploadPropertyVideo(id ?? '')
+  const deleteVideo = useDeletePropertyVideo(id ?? '')
   const submitMutation = useSubmitProperty()
   const [form, setForm] = useState(emptyForm)
   const [images, setImages] = useState<File[]>([])
+  const [video, setVideo] = useState<File | null>(null)
   const [error, setError] = useState('')
 
-  const subcategories = categories.flatMap((c) => c.subcategories ?? [])
+  const canEditMedia =
+    property?.status === 'DRAFT' || property?.status === 'REJECTED'
+
+  const subcategories = flattenSubcategories(categories)
 
   useEffect(() => {
     if (property) {
@@ -98,9 +112,17 @@ export function PropertyFormPage() {
         if (images.length) {
           await uploadImages.mutateAsync({ images, primaryIndex: 0 })
         }
+        if (video) {
+          await uploadVideo.mutateAsync(video)
+          setVideo(null)
+        }
       } else {
         const created = await createMutation.mutateAsync(buildPayload())
-        navigate(`/owner/properties/${created.id}/edit`)
+        navigate(
+          isAdmin
+            ? `/admin/properties/${created.id}/edit`
+            : `/owner/properties/${created.id}/edit`,
+        )
       }
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
@@ -113,7 +135,7 @@ export function PropertyFormPage() {
     setError('')
     try {
       await submitMutation.mutateAsync(id)
-      navigate('/owner/dashboard')
+      navigate(listPath)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
       setError(axiosErr.response?.data?.message ?? t('common.error'))
@@ -130,6 +152,11 @@ export function PropertyFormPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
+      {isAdmin && (
+        <Button variant="ghost" size="sm" className="mb-2" asChild>
+          <Link to={listPath}>{t('common.back')}</Link>
+        </Button>
+      )}
       <h1 className="mb-6 text-2xl font-bold">
         {isEdit ? t('properties.edit') : t('properties.create')}
       </h1>
@@ -233,6 +260,62 @@ export function PropertyFormPage() {
             <Input type="number" dir="ltr" value={form.areaSize} onChange={(e) => setForm({ ...form, areaSize: e.target.value })} className="mt-1" />
           </div>
         </div>
+
+        {isEdit && canEditMedia && (
+          <div>
+            <Label>{t('properties.video')}</Label>
+            <p className="mb-2 text-xs text-muted-foreground">
+              {t('properties.videoHint')}
+            </p>
+            {property?.videoUrl && (
+              <div className="mb-3 space-y-2">
+                <video
+                  src={property.videoUrl}
+                  controls
+                  className="max-h-48 w-full rounded-md border border-border"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteVideo.isPending}
+                  onClick={() => deleteVideo.mutate()}
+                >
+                  {t('properties.deleteVideo')}
+                </Button>
+              </div>
+            )}
+            <Input
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+              className="mt-1"
+              onChange={(e) => setVideo(e.target.files?.[0] ?? null)}
+            />
+            {video && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                disabled={uploadVideo.isPending}
+                onClick={async () => {
+                  setError('')
+                  try {
+                    await uploadVideo.mutateAsync(video)
+                    setVideo(null)
+                  } catch (err: unknown) {
+                    const axiosErr = err as {
+                      response?: { data?: { message?: string } }
+                    }
+                    setError(axiosErr.response?.data?.message ?? t('common.error'))
+                  }
+                }}
+              >
+                {t('properties.uploadVideo')}
+              </Button>
+            )}
+          </div>
+        )}
 
         {isEdit && (
           <div>

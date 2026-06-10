@@ -1,16 +1,21 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
-import type { Category } from '@/lib/types'
+import { extractPaginatedItems } from '@/lib/api/pagination'
+import type { Category, PaginatedResponse } from '@/lib/types'
 
-export function useCategories() {
+export function useCategories(limit = 100) {
   const axios = useAxiosInstance()
 
   return useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', limit],
     queryFn: async () => {
-      const { data } = await axios.get<Category[]>('/categories')
+      const { data } = await axios.get<PaginatedResponse<Category> | Category[]>(
+        '/categories',
+        { params: { page: 1, limit } },
+      )
       return data
     },
+    select: (data) => extractPaginatedItems<Category>(data),
   })
 }
 
@@ -27,6 +32,9 @@ export function useCategory(slug: string) {
   })
 }
 
-export function flattenSubcategories(categories: Category[]) {
-  return categories.flatMap((cat) => cat.subcategories ?? [])
+export function flattenSubcategories(categories: Category[] | unknown) {
+  const list = extractPaginatedItems<Category>(categories)
+  return list.flatMap((cat) =>
+    Array.isArray(cat.subcategories) ? cat.subcategories : [],
+  )
 }

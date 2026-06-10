@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { flattenSubcategories } from '@/features/categories/useCategories'
 import type { Category } from '@/lib/types'
 import type { PropertyFilters } from '@/features/properties/useProperties'
 
@@ -18,7 +19,7 @@ export function PropertyFiltersBar({
 }: PropertyFiltersProps) {
   const { t } = useTranslation()
 
-  const subcategories = categories.flatMap((c) => c.subcategories ?? [])
+  const subcategories = flattenSubcategories(categories)
 
   return (
     <div className="grid gap-4 rounded-lg border border-border bg-muted/30 p-4 md:grid-cols-4">

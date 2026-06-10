@@ -40,7 +40,19 @@ export function PropertyDetailPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <ImageGallery images={property.images} />
+        <div className="space-y-4">
+          <ImageGallery images={property.images} />
+          {property.videoUrl && (
+            <div>
+              <h2 className="mb-2 text-lg font-semibold">{t('properties.video')}</h2>
+              <video
+                src={property.videoUrl}
+                controls
+                className="w-full rounded-lg border border-border"
+              />
+            </div>
+          )}
+        </div>
 
         <div className="space-y-6">
           <p className="text-3xl font-bold text-main">

@@ -19,6 +19,7 @@ import { PendingReviewPage } from '@/pages/owner/PendingReviewPage'
 import { PropertyFormPage } from '@/pages/owner/PropertyFormPage'
 import { HomePage } from '@/pages/public/HomePage'
 import { PropertiesPage } from '@/pages/public/PropertiesPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PropertyDetailPage } from '@/pages/public/PropertyDetailPage'
 import { ProtectedRoute } from '@/router/ProtectedRoute'
 import { PermissionGuard } from '@/routes/PermissionGuard'
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
     element: <DashboardLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: '404', element: <NotFoundPage /> },
       { path: 'properties', element: <PropertiesPage /> },
       { path: 'properties/:id', element: <PropertyDetailPage /> },
       {
@@ -106,6 +108,21 @@ export const router = createBrowserRouter([
                 ],
               },
               {
+                element: <PermissionGuard permission="property.create" />,
+                children: [
+                  { path: 'admin/properties/new', element: <PropertyFormPage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="property.update" />,
+                children: [
+                  {
+                    path: 'admin/properties/:id/edit',
+                    element: <PropertyFormPage />,
+                  },
+                ],
+              },
+              {
                 element: <PermissionGuard permission="category.read" />,
                 children: [
                   { path: 'admin/categories', element: <AdminCategoriesPage /> },
@@ -115,6 +132,7 @@ export const router = createBrowserRouter([
           },
         ],
       },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
   {
@@ -126,6 +144,7 @@ export const router = createBrowserRouter([
       { path: 'register', element: <RegisterPage /> },
       { path: 'verify-email', element: <VerifyEmailPage /> },
       { path: 'forgot-password', element: <ForgotPasswordPage /> },
+      { path: '*', element: <Navigate to="/404" replace /> },
     ],
   },
 ])

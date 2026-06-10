@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
+import { normalizePaginatedResponse } from '@/lib/api/pagination'
 import type { PaginatedResponse, Property, PropertyPurpose } from '@/lib/types'
 
 export interface PropertyFilters {
@@ -16,11 +17,13 @@ export function useProperties(filters: PropertyFilters = {}) {
   return useQuery({
     queryKey: ['properties', filters],
     queryFn: async () => {
-      const { data } = await axios.get<PaginatedResponse<Property>>('/properties', {
-        params: filters,
-      })
+      const { data } = await axios.get<PaginatedResponse<Property> | Property[]>(
+        '/properties',
+        { params: filters },
+      )
       return data
     },
+    select: (data) => normalizePaginatedResponse<Property>(data),
   })
 }
 
@@ -186,6 +189,47 @@ export function useDeletePropertyImage(propertyId: string) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['properties', propertyId] })
+    },
+  })
+}
+
+export function useUploadPropertyVideo(propertyId: string) {
+  const axios = useAxiosInstance()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (video: File) => {
+      const formData = new FormData()
+      formData.append('video', video)
+
+      const { data } = await axios.post<{ message: string; property: Property }>(
+        `/properties/${propertyId}/video`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      )
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['properties', propertyId] })
+      void queryClient.invalidateQueries({ queryKey: ['my-properties'] })
+    },
+  })
+}
+
+export function useDeletePropertyVideo(propertyId: string) {
+  const axios = useAxiosInstance()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await axios.delete<{ message: string; property: Property }>(
+        `/properties/${propertyId}/video`,
+      )
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['properties', propertyId] })
+      void queryClient.invalidateQueries({ queryKey: ['my-properties'] })
     },
   })
 }

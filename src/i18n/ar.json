@@ -29,6 +29,11 @@
     "adminCategories": "التصنيفات",
     "adminPending": "قيد المراجعة"
   },
+  "notFound": {
+    "title": "الصفحة غير موجودة",
+    "description": "الرابط الذي طلبته غير صحيح أو لم يعد متاحاً.",
+    "backHome": "العودة للرئيسية"
+  },
   "common": {
     "loading": "جاري التحميل...",
     "save": "حفظ",
@@ -146,6 +151,10 @@
     "sold": "مباع",
     "rented": "مؤجر",
     "uploadImages": "رفع صور",
+    "video": "فيديو العقار",
+    "videoHint": "اختياري — MP4 أو WebM أو MOV (حد أقصى 50 ميجابايت)",
+    "uploadVideo": "رفع الفيديو",
+    "deleteVideo": "حذف الفيديو",
     "setPrimary": "تعيين كصورة رئيسية",
     "rejectionReason": "سبب الرفض"
   },
