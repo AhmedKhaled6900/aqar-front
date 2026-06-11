@@ -14,14 +14,23 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
   useCreateAttribute,
+  useSyncSubcategoryAttributes,
   useUpdateAttribute,
 } from '@/features/attributes/useAdminAttributes'
-import type { Attribute, AttributeType, CreateAttributeInput } from '@/lib/types'
+import type {
+  AttributeType,
+  CreateAttributeInput,
+  SubcategoryAttributeItem,
+  SubcategoryAttributeLinkInput,
+} from '@/lib/types'
 
 interface AttributeFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  attribute?: Attribute | null
+  subcategoryId: string
+  subcategoryName?: string
+  attribute?: SubcategoryAttributeItem | null
+  existingLinks: SubcategoryAttributeLinkInput[]
 }
 
 const SELECT_TYPES: AttributeType[] = ['SELECT', 'MULTI_SELECT']
@@ -39,14 +48,19 @@ const emptyForm: CreateAttributeInput = {
 export function AttributeFormDialog({
   open,
   onOpenChange,
+  subcategoryId,
+  subcategoryName,
   attribute,
+  existingLinks,
 }: AttributeFormDialogProps) {
   const { t } = useTranslation()
   const createMutation = useCreateAttribute()
   const updateMutation = useUpdateAttribute()
+  const syncMutation = useSyncSubcategoryAttributes()
   const isEdit = !!attribute
   const [form, setForm] = useState<CreateAttributeInput>(emptyForm)
   const [optionsText, setOptionsText] = useState('')
+  const [isRequired, setIsRequired] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -62,14 +76,34 @@ export function AttributeFormDialog({
         options: attribute.options ?? [],
       })
       setOptionsText((attribute.options ?? []).join('\n'))
+      setIsRequired(attribute.isRequired)
     } else {
       setForm(emptyForm)
       setOptionsText('')
+      setIsRequired(false)
     }
     setError('')
   }, [open, attribute])
 
   const needsOptions = SELECT_TYPES.includes(form.type)
+  const isPending =
+    createMutation.isPending || updateMutation.isPending || syncMutation.isPending
+
+  const buildLinksAfterCreate = (attributeId: string): SubcategoryAttributeLinkInput[] => [
+    ...existingLinks,
+    {
+      attributeId,
+      isRequired,
+      sortOrder: existingLinks.length,
+    },
+  ]
+
+  const buildLinksAfterUpdate = (): SubcategoryAttributeLinkInput[] =>
+    existingLinks.map((link) =>
+      link.attributeId === attribute?.id
+        ? { ...link, isRequired }
+        : link,
+    )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,8 +129,16 @@ export function AttributeFormDialog({
     try {
       if (isEdit && attribute) {
         await updateMutation.mutateAsync({ id: attribute.id, input: payload })
+        await syncMutation.mutateAsync({
+          subcategoryId,
+          items: buildLinksAfterUpdate(),
+        })
       } else {
-        await createMutation.mutateAsync(payload)
+        const created = await createMutation.mutateAsync(payload)
+        await syncMutation.mutateAsync({
+          subcategoryId,
+          items: buildLinksAfterCreate(created.id),
+        })
       }
       onOpenChange(false)
     } catch (err: unknown) {
@@ -112,6 +154,11 @@ export function AttributeFormDialog({
           <DialogTitle>
             {isEdit ? t('attributes.edit') : t('attributes.add')}
           </DialogTitle>
+          {subcategoryName && (
+            <p className="text-sm text-muted-foreground">
+              {t('properties.subcategory')}: {subcategoryName}
+            </p>
+          )}
         </DialogHeader>
 
         {error && <Alert variant="destructive">{error}</Alert>}
@@ -199,16 +246,24 @@ export function AttributeFormDialog({
                 className="mt-1"
               />
             </div>
-            <div className="flex items-end gap-2 pb-2">
-              <input
-                id="attr-active"
-                type="checkbox"
-                checked={form.isActive ?? true}
-                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-              />
-              <Label htmlFor="attr-active" className="cursor-pointer">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isRequired}
+                  onChange={(e) => setIsRequired(e.target.checked)}
+                />
+                {t('attributes.required')}
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  id="attr-active"
+                  type="checkbox"
+                  checked={form.isActive ?? true}
+                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                />
                 {t('categories.isActive')}
-              </Label>
+              </label>
             </div>
           </div>
 
@@ -216,10 +271,7 @@ export function AttributeFormDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('common.cancel')}
             </Button>
-            <Button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
+            <Button type="submit" disabled={isPending}>
               {t('common.save')}
             </Button>
           </DialogFooter>

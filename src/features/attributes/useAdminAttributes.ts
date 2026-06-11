@@ -71,6 +71,9 @@ export function useCreateAttribute() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'attributes'] })
+      void queryClient.invalidateQueries({
+        queryKey: ['admin', 'attributes', 'subcategory-links'],
+      })
     },
   })
 }
@@ -86,6 +89,9 @@ export function useUpdateAttribute() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'attributes'] })
+      void queryClient.invalidateQueries({
+        queryKey: ['admin', 'attributes', 'subcategory-links'],
+      })
     },
   })
 }
@@ -103,6 +109,9 @@ export function useDeleteAttribute() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'attributes'] })
+      void queryClient.invalidateQueries({
+        queryKey: ['admin', 'attributes', 'subcategory-links'],
+      })
     },
   })
 }
