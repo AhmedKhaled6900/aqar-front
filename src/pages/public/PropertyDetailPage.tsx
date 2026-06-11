@@ -2,6 +2,7 @@ import { BedDouble, Bath, MapPin, Ruler } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { ImageGallery } from '@/components/properties/ImageGallery'
+import { PropertyRentalCard } from '@/components/properties/PropertyRentalCard'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
@@ -37,6 +38,12 @@ export function PropertyDetailPage() {
         <Badge variant="secondary">
           {property.purpose === 'SALE' ? t('home.sale') : t('home.rent')}
         </Badge>
+        {property.status === 'RENTED' && (
+          <Badge variant="default">{t('status.RENTED')}</Badge>
+        )}
+        {property.isNegotiable && property.status === 'APPROVED' && (
+          <Badge variant="outline">{t('properties.isNegotiable')}</Badge>
+        )}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -92,6 +99,8 @@ export function PropertyDetailPage() {
               <p>{property.address}</p>
             </CardContent>
           </Card>
+
+          {property.rental && <PropertyRentalCard rental={property.rental} />}
 
           <div>
             <h2 className="mb-2 text-xl font-semibold">

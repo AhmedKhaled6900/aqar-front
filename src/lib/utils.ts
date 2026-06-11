@@ -38,3 +38,12 @@ export function formatOfferPrice(price: number, pricePeriod?: string | null) {
   const period = pricePeriod ? pricePeriodSuffix[pricePeriod] : 'شهر'
   return `${formatted} / ${period}`
 }
+
+export function formatRentalDuration(duration: number, pricePeriod?: string | null) {
+  const unit = pricePeriod ? pricePeriodSuffix[pricePeriod] : 'شهر'
+  return `${duration} ${unit}`
+}
+
+export function formatDateAr(date: string) {
+  return new Date(date).toLocaleDateString('ar-EG', { dateStyle: 'medium' })
+}

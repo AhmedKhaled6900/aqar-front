@@ -19,27 +19,33 @@ interface CounterOfferDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   offerId: string
+  defaultDuration?: number
+  defaultPricePeriod?: PricePeriod
 }
 
 export function CounterOfferDialog({
   open,
   onOpenChange,
   offerId,
+  defaultDuration = 12,
+  defaultPricePeriod = 'MONTH',
 }: CounterOfferDialogProps) {
   const { t } = useTranslation()
   const counterMutation = useCounterOffer()
   const [price, setPrice] = useState('')
-  const [pricePeriod, setPricePeriod] = useState<PricePeriod>('MONTH')
+  const [pricePeriod, setPricePeriod] = useState<PricePeriod>(defaultPricePeriod)
+  const [duration, setDuration] = useState(String(defaultDuration))
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (!open) return
     setPrice('')
-    setPricePeriod('MONTH')
+    setPricePeriod(defaultPricePeriod)
+    setDuration(String(defaultDuration))
     setNotes('')
     setError('')
-  }, [open])
+  }, [open, defaultDuration, defaultPricePeriod])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,6 +56,7 @@ export function CounterOfferDialog({
         input: {
           price: Number(price),
           pricePeriod,
+          duration: Number(duration),
           notes: notes || undefined,
         },
       })
@@ -95,6 +102,20 @@ export function CounterOfferDialog({
               <option value="MONTH">{t('properties.pricePeriodMonth')}</option>
               <option value="YEAR">{t('properties.pricePeriodYear')}</option>
             </select>
+          </div>
+
+          <div>
+            <Label>{t('offers.duration')}</Label>
+            <Input
+              type="number"
+              dir="ltr"
+              min={1}
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              required
+              className="mt-1"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">{t('offers.durationHint')}</p>
           </div>
 
           <div>

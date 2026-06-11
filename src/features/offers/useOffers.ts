@@ -66,6 +66,10 @@ export function useAcceptOffer() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['offers'] })
+      void queryClient.invalidateQueries({ queryKey: ['properties'] })
+      void queryClient.invalidateQueries({ queryKey: ['my-properties'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'properties'] })
+      void queryClient.invalidateQueries({ queryKey: ['bookings'] })
     },
   })
 }

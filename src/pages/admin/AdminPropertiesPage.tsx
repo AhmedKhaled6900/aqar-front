@@ -10,7 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { useAdminProperties } from '@/features/admin/useAdmin'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import type { PropertyStatus } from '@/lib/types'
-import { formatPrice } from '@/lib/utils'
+import { formatDateAr, formatOfferPrice, formatPrice } from '@/lib/utils'
 
 const statusVariant: Record<string, 'default' | 'secondary' | 'warning' | 'destructive' | 'success'> = {
   DRAFT: 'secondary',
@@ -84,9 +84,27 @@ export function AdminPropertiesPage() {
                         property.purpose,
                         property.pricePeriod,
                       )}{' '}
-                      —{' '}
-                      {property.city} — {property.owner?.name}
+                      — {property.city} — {property.owner?.name}
                     </p>
+                    {property.rental && (
+                      <div className="mt-2 rounded-md border border-border bg-muted/30 p-2 text-sm">
+                        <p className="font-medium text-main">
+                          {formatOfferPrice(
+                            property.rental.agreedPrice,
+                            property.rental.pricePeriod,
+                          )}
+                        </p>
+                        <p className="text-muted-foreground">
+                          {t('rental.endsAt')}: {formatDateAr(property.rental.endsAt)}
+                          {property.rental.tenant && (
+                            <>
+                              {' '}
+                              — {t('rental.tenant')}: {property.rental.tenant.name}
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {property.status === 'PENDING' && (

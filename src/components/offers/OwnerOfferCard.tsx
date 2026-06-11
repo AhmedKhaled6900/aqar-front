@@ -11,7 +11,7 @@ import {
   useRejectOffer,
 } from '@/features/offers/useOffers'
 import type { PriceOffer } from '@/lib/types'
-import { formatOfferPrice } from '@/lib/utils'
+import { formatOfferPrice, formatRentalDuration } from '@/lib/utils'
 
 interface OwnerOfferCardProps {
   offer: PriceOffer
@@ -73,6 +73,13 @@ export function OwnerOfferCard({ offer }: OwnerOfferCardProps) {
               <p className="text-lg font-bold text-main">
                 {formatOfferPrice(offer.latestRound.price, offer.latestRound.pricePeriod)}
               </p>
+              <p className="text-sm text-muted-foreground">
+                {t('offers.duration')}:{' '}
+                {formatRentalDuration(
+                  offer.latestRound.duration,
+                  offer.latestRound.pricePeriod,
+                )}
+              </p>
               {offer.latestRound.notes && (
                 <p className="mt-1 text-sm text-muted-foreground">
                   {offer.latestRound.notes}
@@ -108,6 +115,10 @@ export function OwnerOfferCard({ offer }: OwnerOfferCardProps) {
                   <li key={round.id}>
                     <span className="font-medium">
                       {formatOfferPrice(round.price, round.pricePeriod)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {' '}
+                      ({formatRentalDuration(round.duration, round.pricePeriod)})
                     </span>
                     <span className="mx-1 text-muted-foreground">—</span>
                     <span className="text-muted-foreground">
@@ -152,6 +163,8 @@ export function OwnerOfferCard({ offer }: OwnerOfferCardProps) {
         open={counterOpen}
         onOpenChange={setCounterOpen}
         offerId={offer.id}
+        defaultDuration={offer.latestRound?.duration ?? 12}
+        defaultPricePeriod={offer.latestRound?.pricePeriod ?? 'MONTH'}
       />
     </>
   )

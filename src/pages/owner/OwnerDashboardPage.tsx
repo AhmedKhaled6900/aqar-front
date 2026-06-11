@@ -1,16 +1,16 @@
-import { Plus } from 'lucide-react'
+import { History, Plus } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { PropertyRentalCard } from '@/components/properties/PropertyRentalCard'
+import { PropertyRentalHistoryDialog } from '@/components/properties/PropertyRentalHistoryDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { useMe } from '@/features/auth/useMe'
-import {
-  useMarkPropertyRented,
-  useMarkPropertySold,
-  useMyProperties,
-} from '@/features/properties/useProperties'
+import { useMarkPropertySold, useMyProperties } from '@/features/properties/useProperties'
+import type { Property } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
 
 const statusVariant: Record<string, 'default' | 'secondary' | 'warning' | 'destructive' | 'success'> = {
@@ -27,7 +27,7 @@ export function OwnerDashboardPage() {
   const { data: me } = useMe()
   const { data, isLoading } = useMyProperties()
   const markSold = useMarkPropertySold()
-  const markRented = useMarkPropertyRented()
+  const [historyProperty, setHistoryProperty] = useState<Property | null>(null)
 
   return (
     <div>
@@ -54,9 +54,9 @@ export function OwnerDashboardPage() {
         <div className="grid gap-4">
           {data.items.map((property) => (
             <Card key={property.id}>
-              <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
-                <div>
-                  <div className="mb-1 flex items-center gap-2">
+              <CardContent className="flex flex-wrap items-start justify-between gap-4 p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold">{property.title}</h3>
                     <Badge variant={statusVariant[property.status] ?? 'secondary'}>
                       {t(`status.${property.status}`)}
@@ -68,13 +68,15 @@ export function OwnerDashboardPage() {
                       property.purpose,
                       property.pricePeriod,
                     )}{' '}
-                    —{' '}
-                    {property.city}
+                    — {property.city}
                   </p>
                   {property.rejectionReason && (
                     <p className="mt-1 text-sm text-destructive">
                       {t('properties.rejectionReason')}: {property.rejectionReason}
                     </p>
+                  )}
+                  {property.rental && (
+                    <PropertyRentalCard rental={property.rental} compact />
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -95,16 +97,19 @@ export function OwnerDashboardPage() {
                       {t('properties.markSold')}
                     </Button>
                   )}
-                  {property.status === 'APPROVED' && property.purpose === 'RENT' && (
+                  {property.purpose === 'RENT' && (
                     <Button
                       size="sm"
-                      variant="secondary"
-                      disabled={markRented.isPending}
-                      onClick={() => markRented.mutate(property.id)}
+                      variant="outline"
+                      onClick={() => setHistoryProperty(property)}
                     >
-                      {t('properties.markRented')}
+                      <History className="h-4 w-4" />
+                      {t('rental.viewHistory')}
                     </Button>
                   )}
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={`/properties/${property.id}`}>{t('common.view')}</Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -112,6 +117,17 @@ export function OwnerDashboardPage() {
         </div>
       ) : (
         <p className="text-center text-muted-foreground">{t('common.noResults')}</p>
+      )}
+
+      {historyProperty && (
+        <PropertyRentalHistoryDialog
+          propertyId={historyProperty.id}
+          propertyTitle={historyProperty.title}
+          open={!!historyProperty}
+          onOpenChange={(open) => {
+            if (!open) setHistoryProperty(null)
+          }}
+        />
       )}
     </div>
   )

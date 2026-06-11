@@ -34,9 +34,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
         <CardContent className="p-4">
           <div className="mb-2 flex items-start justify-between gap-2">
             <h3 className="line-clamp-1 font-semibold">{property.title}</h3>
-            <Badge variant={property.purpose === 'SALE' ? 'default' : 'secondary'}>
-              {property.purpose === 'SALE' ? t('home.sale') : t('home.rent')}
-            </Badge>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <Badge variant={property.purpose === 'SALE' ? 'default' : 'secondary'}>
+                {property.purpose === 'SALE' ? t('home.sale') : t('home.rent')}
+              </Badge>
+              {property.status === 'RENTED' && (
+                <Badge variant="secondary">{t('status.RENTED')}</Badge>
+              )}
+            </div>
           </div>
           <p className="mb-2 text-lg font-bold text-main">
             {formatPrice(Number(property.price), property.purpose, property.pricePeriod)}

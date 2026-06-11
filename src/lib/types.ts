@@ -92,8 +92,41 @@ export interface Property {
   submittedAt?: string | null
   approvedAt?: string | null
   isNegotiable?: boolean
+  rental?: PropertyRental | null
   images: PropertyImage[]
   videoUrl?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type RentalSource = 'DIRECT_BOOKING' | 'NEGOTIATION'
+
+export type RentalStatus = 'ACTIVE' | 'CANCELLED' | 'COMPLETED'
+
+export interface RentalTenant {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+}
+
+export interface PropertyRental {
+  id: string
+  source: RentalSource
+  agreedPrice: number
+  pricePeriod: PricePeriod
+  duration: number
+  startedAt: string
+  endsAt: string
+  status: RentalStatus
+  notes?: string | null
+  offerId?: string | null
+  tenant?: RentalTenant
+}
+
+export interface PropertyRentalRecord extends PropertyRental {
+  propertyId: string
+  tenantId: string
   createdAt: string
   updatedAt: string
 }
@@ -114,6 +147,7 @@ export interface OfferRound {
   senderId: string
   price: number
   pricePeriod: PricePeriod
+  duration: number
   notes?: string | null
   createdAt: string
 }
@@ -173,6 +207,7 @@ export interface OwnerPropertyOffersGroup {
 export interface CreateOfferInput {
   price: number
   pricePeriod: PricePeriod
+  duration: number
   notes?: string
 }
 

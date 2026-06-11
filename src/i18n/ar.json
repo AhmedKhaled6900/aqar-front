@@ -254,7 +254,9 @@
     "counter": "عرض مضاد",
     "counterTitle": "إرسال عرض سعر مضاد",
     "sendCounter": "إرسال العرض",
-    "acceptConfirm": "هل أنت متأكد من قبول هذا العرض؟",
+    "duration": "مدة الإيجار",
+    "durationHint": "عدد الوحدات حسب مدة السعر (مثلاً 12 شهر)",
+    "acceptConfirm": "هل أنت متأكد من قبول هذا العرض؟ سيتم تأجير الوحدة تلقائياً بالسعر المتفق عليه.",
     "rejectReasonPrompt": "سبب الرفض (اختياري):",
     "negotiationHistory": "سجل المفاوضة",
     "customerOffers": "عروض العميل",
@@ -275,6 +277,27 @@
       "REJECTED": "مرفوض",
       "EXPIRED": "منتهي",
       "NEGOTIATING_FAIL": "فشل التفاوض"
+    }
+  },
+  "rental": {
+    "title": "بيانات الإيجار",
+    "activeContract": "عقد الإيجار الحالي",
+    "agreedPrice": "السعر المتفق عليه",
+    "duration": "مدة الإيجار",
+    "startedAt": "تاريخ البدء",
+    "endsAt": "تاريخ الانتهاء",
+    "tenant": "المستأجر",
+    "viewHistory": "سجل الإيجار",
+    "historyTitle": "سجل إيجار الوحدة",
+    "noHistory": "لا يوجد سجل إيجار لهذه الوحدة",
+    "source": {
+      "DIRECT_BOOKING": "حجز مباشر",
+      "NEGOTIATION": "تفاوض"
+    },
+    "status": {
+      "ACTIVE": "نشط",
+      "CANCELLED": "ملغي",
+      "COMPLETED": "منتهي"
     }
   },
   "status": {
