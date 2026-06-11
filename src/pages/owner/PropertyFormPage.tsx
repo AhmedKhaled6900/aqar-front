@@ -11,6 +11,8 @@ import {
   useCategorySelectMenu,
   useSubcategorySelectMenu,
 } from '@/features/categories/useCategories'
+import { PropertyAttributesForm } from '@/components/attributes/PropertyAttributesForm'
+import { useSubcategoryAttributes } from '@/features/attributes/useAttributes'
 import {
   useCreateProperty,
   useDeletePropertyImage,
@@ -21,7 +23,12 @@ import {
   useUploadPropertyImages,
   useUploadPropertyVideo,
 } from '@/features/properties/useProperties'
-import type { PricePeriod, PropertyPurpose } from '@/lib/types'
+import type {
+  PricePeriod,
+  PropertyCustomAttributeInput,
+  PropertyPurpose,
+} from '@/lib/types'
+import { isAttributeValueEmpty } from '@/lib/utils'
 
 const emptyForm = {
   title: '',
@@ -66,7 +73,14 @@ export function PropertyFormPage() {
   )
   const [images, setImages] = useState<File[]>([])
   const [video, setVideo] = useState<File | null>(null)
+  const [systemAttributeValues, setSystemAttributeValues] = useState<
+    Record<string, unknown>
+  >({})
+  const [customAttributes, setCustomAttributes] = useState<
+    PropertyCustomAttributeInput[]
+  >([])
   const [error, setError] = useState('')
+  const { data: subcategoryAttributes } = useSubcategoryAttributes(form.subcategoryId)
 
   const canEditMedia =
     property?.status === 'DRAFT' || property?.status === 'REJECTED'
@@ -95,6 +109,18 @@ export function PropertyFormPage() {
         subcategoryId: property.subcategoryId ?? property.categoryId ?? '',
         isNegotiable: property.isNegotiable ?? false,
       })
+      const values: Record<string, unknown> = {}
+      property.attributes?.system.forEach((attr) => {
+        values[attr.attributeId] = attr.value
+      })
+      setSystemAttributeValues(values)
+      setCustomAttributes(
+        (property.attributes?.custom ?? []).map((attr) => ({
+          name: attr.name,
+          type: attr.type,
+          value: attr.value,
+        })),
+      )
     }
   }, [property])
 
@@ -117,16 +143,46 @@ export function PropertyFormPage() {
       isNegotiable: form.isNegotiable,
     }
 
-    if (form.purpose === 'RENT') {
-      return { ...base, pricePeriod: form.pricePeriod }
-    }
+    const withRent =
+      form.purpose === 'RENT' ? { ...base, pricePeriod: form.pricePeriod } : base
 
-    return base
+    if (!form.subcategoryId) return withRent
+
+    const items = subcategoryAttributes?.items ?? []
+    return {
+      ...withRent,
+      attributes: items.map((attr) => ({
+        attributeId: attr.id,
+        value: systemAttributeValues[attr.id],
+      })),
+      customAttributes: customAttributes
+        .filter((attr) => attr.name.trim())
+        .map((attr) => ({
+          name: attr.name.trim(),
+          type: attr.type,
+          value: attr.value,
+        })),
+    }
+  }
+
+  const validateAttributes = () => {
+    if (!form.subcategoryId) return true
+    for (const attr of subcategoryAttributes?.items ?? []) {
+      if (
+        attr.isRequired &&
+        isAttributeValueEmpty(systemAttributeValues[attr.id], attr.type)
+      ) {
+        setError(t('attributes.requiredMissing', { name: attr.name }))
+        return false
+      }
+    }
+    return true
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    if (!validateAttributes()) return
 
     try {
       if (isEdit) {
@@ -275,13 +331,15 @@ export function PropertyFormPage() {
             <select
               className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
               value={form.parentCategoryId}
-              onChange={(e) =>
+              onChange={(e) => {
                 setForm({
                   ...form,
                   parentCategoryId: e.target.value,
                   subcategoryId: '',
                 })
-              }
+                setSystemAttributeValues({})
+                setCustomAttributes([])
+              }}
               required
             >
               <option value="">{t('properties.selectParentCategory')}</option>
@@ -299,9 +357,11 @@ export function PropertyFormPage() {
               <select
                 className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
                 value={form.subcategoryId}
-                onChange={(e) =>
+                onChange={(e) => {
                   setForm({ ...form, subcategoryId: e.target.value })
-                }
+                  setSystemAttributeValues({})
+                  setCustomAttributes([])
+                }}
               >
                 <option value="">{t('properties.selectSubcategoryOptional')}</option>
                 {subcategories.map((sub) => (
@@ -329,6 +389,16 @@ export function PropertyFormPage() {
           <Label>{t('properties.address')}</Label>
           <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required className="mt-1" />
         </div>
+
+        {form.subcategoryId && (
+          <PropertyAttributesForm
+            subcategoryId={form.subcategoryId}
+            systemValues={systemAttributeValues}
+            onSystemValuesChange={setSystemAttributeValues}
+            customAttributes={customAttributes}
+            onCustomAttributesChange={setCustomAttributes}
+          />
+        )}
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div>

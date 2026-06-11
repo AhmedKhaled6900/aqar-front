@@ -1,6 +1,7 @@
 import { BedDouble, Bath, MapPin, Ruler } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
+import { PropertyAttributesDisplay } from '@/components/attributes/PropertyAttributesDisplay'
 import { ImageGallery } from '@/components/properties/ImageGallery'
 import { PropertyRentalCard } from '@/components/properties/PropertyRentalCard'
 import { Badge } from '@/components/ui/badge'
@@ -101,6 +102,8 @@ export function PropertyDetailPage() {
           </Card>
 
           {property.rental && <PropertyRentalCard rental={property.rental} />}
+
+          <PropertyAttributesDisplay attributes={property.attributes} />
 
           <div>
             <h2 className="mb-2 text-xl font-semibold">

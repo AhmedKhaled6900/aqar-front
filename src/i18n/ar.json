@@ -29,6 +29,7 @@
     "adminProperties": "العقارات",
     "adminCategories": "التصنيفات",
     "adminSubcategories": "التصنيفات الفرعية",
+    "adminAttributes": "خصائص العقارات",
     "adminPending": "قيد المراجعة"
   },
   "notFound": {
@@ -42,6 +43,7 @@
     "cancel": "إلغاء",
     "submit": "إرسال",
     "delete": "حذف",
+    "add": "إضافة",
     "edit": "تعديل",
     "back": "رجوع",
     "search": "بحث",
@@ -277,6 +279,43 @@
       "REJECTED": "مرفوض",
       "EXPIRED": "منتهي",
       "NEGOTIATING_FAIL": "فشل التفاوض"
+    }
+  },
+  "attributes": {
+    "adminTitle": "خصائص العقارات",
+    "adminDesc": "إنشاء وإدارة الخصائص الأساسية (SYSTEM) وربطها بالتصنيفات الفرعية",
+    "add": "إضافة خاصية",
+    "edit": "تعديل الخاصية",
+    "empty": "لا توجد خصائص",
+    "name": "اسم الخاصية",
+    "slug": "الرابط (slug)",
+    "type": "نوع الخاصية",
+    "value": "القيمة",
+    "options": "الخيارات",
+    "optionsPlaceholder": "خيار واحد في كل سطر",
+    "optionsHint": "مطلوب لأنواع القائمة والاختيار المتعدد",
+    "selectOption": "— اختر —",
+    "selectAttribute": "— اختر خاصية —",
+    "required": "إلزامي",
+    "inactive": "غير نشط",
+    "deleteConfirm": "هل أنت متأكد من حذف هذه الخاصية؟",
+    "linkTitle": "ربط الخصائص بالتصنيف الفرعي",
+    "addLink": "إضافة خاصية",
+    "noLinks": "لم يتم ربط أي خصائص بعد",
+    "propertySection": "خصائص العقار",
+    "customSection": "خصائص إضافية",
+    "customHint": "خصائص خاصة بهذا العقار فقط (غير موجودة في الكتالوج)",
+    "addCustom": "إضافة خاصية مخصصة",
+    "customItem": "خاصية {{index}}",
+    "noLinked": "لا توجد خصائص مرتبطة بهذا التصنيف الفرعي",
+    "requiredMissing": "الخاصية «{{name}}» مطلوبة",
+    "types": {
+      "TEXT": "نص",
+      "NUMBER": "رقم",
+      "BOOLEAN": "نعم/لا",
+      "SELECT": "قائمة",
+      "MULTI_SELECT": "اختيار متعدد",
+      "DATE": "تاريخ"
     }
   },
   "rental": {

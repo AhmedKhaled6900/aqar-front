@@ -47,3 +47,20 @@ export function formatRentalDuration(duration: number, pricePeriod?: string | nu
 export function formatDateAr(date: string) {
   return new Date(date).toLocaleDateString('ar-EG', { dateStyle: 'medium' })
 }
+
+export function formatAttributeValue(
+  value: unknown,
+  type: string,
+): string {
+  if (value === null || value === undefined || value === '') return '—'
+  if (type === 'BOOLEAN') return value ? 'نعم' : 'لا'
+  if (type === 'MULTI_SELECT' && Array.isArray(value)) return value.join('، ')
+  if (type === 'DATE' && typeof value === 'string') return formatDateAr(value)
+  return String(value)
+}
+
+export function isAttributeValueEmpty(value: unknown, type: string): boolean {
+  if (value === undefined || value === null || value === '') return true
+  if (type === 'MULTI_SELECT' && Array.isArray(value)) return value.length === 0
+  return false
+}

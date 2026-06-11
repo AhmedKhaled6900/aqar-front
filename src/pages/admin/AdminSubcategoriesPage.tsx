@@ -1,7 +1,8 @@
-import { Layers, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Layers, Link2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { SubcategoryAttributesDialog } from '@/components/attributes/SubcategoryAttributesDialog'
 import { SubcategoryFormDialog } from '@/components/categories/SubcategoryFormDialog'
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table'
 import { Alert } from '@/components/ui/alert'
@@ -31,6 +32,7 @@ export function AdminSubcategoriesPage() {
   const [isActiveFilter, setIsActiveFilter] = useState<'all' | 'true' | 'false'>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingSubcategoryId, setEditingSubcategoryId] = useState<string | null>(null)
+  const [linkingSubcategory, setLinkingSubcategory] = useState<AdminCategory | null>(null)
   const [error, setError] = useState('')
 
   const listFilters = {
@@ -50,6 +52,7 @@ export function AdminSubcategoriesPage() {
   const canCreate = hasPermission('category.create')
   const canUpdate = hasPermission('category.update')
   const canDelete = hasPermission('category.delete')
+  const canLinkAttributes = hasPermission('attribute.update')
 
   const handleParentFilterChange = (nextParentId: string) => {
     setPage(1)
@@ -123,6 +126,16 @@ export function AdminSubcategoriesPage() {
         className: 'w-[120px]',
         cell: (row) => (
           <div className="flex flex-wrap gap-1">
+            {canLinkAttributes && (
+              <Button
+                variant="ghost"
+                size="sm"
+                title={t('attributes.linkTitle')}
+                onClick={() => setLinkingSubcategory(row)}
+              >
+                <Link2 className="h-4 w-4" />
+              </Button>
+            )}
             {canUpdate && (
               <Button variant="ghost" size="sm" onClick={() => openEdit(row)}>
                 <Pencil className="h-4 w-4" />
@@ -143,7 +156,7 @@ export function AdminSubcategoriesPage() {
         ),
       },
     ],
-    [t, canUpdate, canDelete, deleteMutation.isPending],
+    [t, canUpdate, canDelete, canLinkAttributes, deleteMutation.isPending],
   )
 
   if (loadingMain || isLoading) {
@@ -225,6 +238,17 @@ export function AdminSubcategoriesPage() {
         defaultParentId={parentIdFilter}
         mainCategories={mainCategories?.items ?? []}
       />
+
+      {linkingSubcategory && (
+        <SubcategoryAttributesDialog
+          open={!!linkingSubcategory}
+          onOpenChange={(open) => {
+            if (!open) setLinkingSubcategory(null)
+          }}
+          subcategoryId={linkingSubcategory.id}
+          subcategoryName={linkingSubcategory.name}
+        />
+      )}
     </div>
   )
 }

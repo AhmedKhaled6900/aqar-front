@@ -5,6 +5,8 @@ import type {
   PaginatedResponse,
   PricePeriod,
   Property,
+  PropertyAttributeInput,
+  PropertyCustomAttributeInput,
   PropertyPurpose,
 } from '@/lib/types'
 
@@ -62,6 +64,8 @@ export interface CreatePropertyInput {
   parentCategoryId: string
   subcategoryId?: string
   isNegotiable?: boolean
+  attributes?: PropertyAttributeInput[]
+  customAttributes?: PropertyCustomAttributeInput[]
 }
 
 export function useCreateProperty() {

@@ -93,6 +93,7 @@ export interface Property {
   approvedAt?: string | null
   isNegotiable?: boolean
   rental?: PropertyRental | null
+  attributes?: PropertyAttributesGroup
   images: PropertyImage[]
   videoUrl?: string | null
   createdAt: string
@@ -284,6 +285,92 @@ export interface UpdateCategoryInput {
 
 export type CreateSubcategoryInput = Omit<CreateCategoryInput, 'parentId'>
 export type UpdateSubcategoryInput = UpdateCategoryInput
+
+export type AttributeType =
+  | 'TEXT'
+  | 'NUMBER'
+  | 'BOOLEAN'
+  | 'SELECT'
+  | 'MULTI_SELECT'
+  | 'DATE'
+
+export type AttributeScope = 'SYSTEM' | 'COMPANY'
+
+export interface Attribute {
+  id: string
+  name: string
+  slug: string
+  type: AttributeType
+  scope: AttributeScope
+  options: string[] | null
+  companyId: string | null
+  createdById: string | null
+  isActive: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SubcategoryAttributeItem extends Attribute {
+  isRequired: boolean
+  linkSortOrder: number
+}
+
+export interface SubcategoryAttributesResponse {
+  subcategoryId: string
+  items: SubcategoryAttributeItem[]
+}
+
+export interface CreateAttributeInput {
+  name: string
+  slug: string
+  type: AttributeType
+  scope: AttributeScope
+  options?: string[]
+  sortOrder?: number
+  isActive?: boolean
+}
+
+export type UpdateAttributeInput = Partial<CreateAttributeInput>
+
+export interface SubcategoryAttributeLinkInput {
+  attributeId: string
+  isRequired?: boolean
+  sortOrder?: number
+}
+
+export interface PropertySystemAttribute {
+  id: string
+  attributeId: string
+  name: string
+  slug: string
+  type: AttributeType
+  value: unknown
+}
+
+export interface PropertyCustomAttribute {
+  id: string
+  name: string
+  type: AttributeType
+  value: unknown
+}
+
+export interface PropertyAttributesGroup {
+  system: PropertySystemAttribute[]
+  custom: PropertyCustomAttribute[]
+}
+
+export interface PropertyAttributeInput {
+  attributeId: string
+  value: unknown
+}
+
+export interface PropertyCustomAttributeInput {
+  name: string
+  type: AttributeType
+  options?: string[]
+  value: unknown
+}
 
 export type NotificationType =
   | 'USER_REGISTERED'
