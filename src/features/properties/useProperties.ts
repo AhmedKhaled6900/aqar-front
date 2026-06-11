@@ -61,6 +61,7 @@ export interface CreatePropertyInput {
   pricePeriod?: PricePeriod
   parentCategoryId: string
   subcategoryId?: string
+  isNegotiable?: boolean
 }
 
 export function useCreateProperty() {

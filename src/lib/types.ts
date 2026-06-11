@@ -91,10 +91,89 @@ export interface Property {
   rejectionReason?: string | null
   submittedAt?: string | null
   approvedAt?: string | null
+  isNegotiable?: boolean
   images: PropertyImage[]
   videoUrl?: string | null
   createdAt: string
   updatedAt: string
+}
+
+export type OfferStatus =
+  | 'PENDING'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'EXPIRED'
+  | 'NEGOTIATING'
+  | 'NEGOTIATING_FAIL'
+
+export type OfferSenderRole = 'CUSTOMER' | 'OWNER'
+
+export interface OfferRound {
+  id: string
+  senderRole: OfferSenderRole
+  senderId: string
+  price: number
+  pricePeriod: PricePeriod
+  notes?: string | null
+  createdAt: string
+}
+
+export interface PriceOffer {
+  id: string
+  propertyId: string
+  customerId: string
+  status: OfferStatus
+  expiresAt: string
+  customerOfferCount: number
+  ownerOfferCount: number
+  maxOffersPerSide: number
+  expiresInDays: number
+  property: {
+    id: string
+    title: string
+    ownerId: string
+    isNegotiable: boolean
+    status: PropertyStatus
+    listPrice: number
+    listPricePeriod?: PricePeriod | null
+    purpose: PropertyPurpose
+  }
+  customer: { id: string; name: string; email: string | null }
+  latestRound: OfferRound | null
+  rounds: OfferRound[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface OfferSummary {
+  total: number
+  pending: number
+  negotiating: number
+  accepted: number
+  rejected: number
+  expired: number
+  negotiatingFailed: number
+  active: number
+  closed: number
+}
+
+export interface OwnerPropertyOffersGroup {
+  property: {
+    id: string
+    title: string
+    status: PropertyStatus
+    isNegotiable: boolean
+    price: number
+    pricePeriod?: PricePeriod | null
+  }
+  summary: OfferSummary
+  offers: PriceOffer[]
+}
+
+export interface CreateOfferInput {
+  price: number
+  pricePeriod: PricePeriod
+  notes?: string
 }
 
 export interface PaginationMeta {

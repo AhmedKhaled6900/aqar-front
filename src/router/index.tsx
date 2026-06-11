@@ -15,6 +15,7 @@ import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage'
 import { CompleteProfilePage } from '@/pages/owner/CompleteProfilePage'
 import { OwnerDashboardPage } from '@/pages/owner/OwnerDashboardPage'
+import { OwnerOffersPage } from '@/pages/owner/OwnerOffersPage'
 import { OwnerProfilePage } from '@/pages/owner/OwnerProfilePage'
 import { PendingReviewPage } from '@/pages/owner/PendingReviewPage'
 import { PropertyFormPage } from '@/pages/owner/PropertyFormPage'
@@ -42,6 +43,10 @@ export const router = createBrowserRouter([
             element: <RoleGuard roles={['OWNER']} />,
             children: [
               { path: 'owner/dashboard', element: <OwnerDashboardPage /> },
+              {
+                element: <PermissionGuard permission="offer.read" />,
+                children: [{ path: 'owner/offers', element: <OwnerOffersPage /> }],
+              },
               { path: 'owner/pending-review', element: <PendingReviewPage /> },
               {
                 element: <PermissionGuard permission="owner.profile.read" />,

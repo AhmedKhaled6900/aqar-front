@@ -27,3 +27,14 @@ export function formatPrice(
   const period = pricePeriod ? pricePeriodSuffix[pricePeriod] : 'شهر'
   return `${formatted} / ${period}`
 }
+
+export function formatOfferPrice(price: number, pricePeriod?: string | null) {
+  const formatted = new Intl.NumberFormat('ar-EG', {
+    style: 'currency',
+    currency: 'EGP',
+    maximumFractionDigits: 0,
+  }).format(price)
+
+  const period = pricePeriod ? pricePeriodSuffix[pricePeriod] : 'شهر'
+  return `${formatted} / ${period}`
+}

@@ -23,6 +23,7 @@
     "myProperties": "عقاراتي",
     "addProperty": "إضافة عقار",
     "profile": "الملف الشخصي",
+    "ownerOffers": "عروض الأسعار",
     "adminOwners": "مراجعة الملاك",
     "adminAllOwners": "جميع الملاك",
     "adminProperties": "العقارات",
@@ -170,6 +171,8 @@
     "create": "إضافة عقار جديد",
     "edit": "تعديل العقار",
     "submitForReview": "إرسال للمراجعة",
+    "isNegotiable": "قابل للتفاوض على السعر",
+    "isNegotiableHint": "يسمح للعملاء المسجّلين بإرسال عروض سعر على هذا العقار",
     "markSold": "تعيين كمباع",
     "markRented": "تعيين كمؤجر",
     "draft": "مسودة",
@@ -236,6 +239,42 @@
     "pendingType": {
       "KYC_REVIEW": "مراجعة KYC",
       "EMAIL_NOT_VERIFIED": "بريد غير مؤكد"
+    }
+  },
+  "offers": {
+    "ownerTitle": "عروض الأسعار الواردة",
+    "ownerDesc": "عروض العملاء على عقاراتك — رد بقبول أو رفض أو عرض مضاد",
+    "noOffers": "لا توجد عروض أسعار حتى الآن",
+    "listPrice": "السعر المعلن",
+    "price": "السعر المقترح",
+    "pricePeriod": "مدة السعر",
+    "notes": "ملاحظات",
+    "accept": "قبول",
+    "reject": "رفض",
+    "counter": "عرض مضاد",
+    "counterTitle": "إرسال عرض سعر مضاد",
+    "sendCounter": "إرسال العرض",
+    "acceptConfirm": "هل أنت متأكد من قبول هذا العرض؟",
+    "rejectReasonPrompt": "سبب الرفض (اختياري):",
+    "negotiationHistory": "سجل المفاوضة",
+    "customerOffers": "عروض العميل",
+    "ownerOffers": "عروضك",
+    "expiresAt": "ينتهي في",
+    "activeCount": "{{count}} نشط",
+    "pendingCount": "{{count}} في الانتظار",
+    "negotiatingCount": "{{count}} قيد التفاوض",
+    "totalCount": "{{count}} إجمالي",
+    "sender": {
+      "CUSTOMER": "العميل",
+      "OWNER": "المالك"
+    },
+    "status": {
+      "PENDING": "في انتظار ردك",
+      "NEGOTIATING": "قيد التفاوض",
+      "ACCEPTED": "مقبول",
+      "REJECTED": "مرفوض",
+      "EXPIRED": "منتهي",
+      "NEGOTIATING_FAIL": "فشل التفاوض"
     }
   },
   "status": {

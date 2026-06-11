@@ -39,6 +39,7 @@ const emptyForm = {
   pricePeriod: 'MONTH' as PricePeriod,
   parentCategoryId: '',
   subcategoryId: '',
+  isNegotiable: false,
 }
 
 export function PropertyFormPage() {
@@ -92,6 +93,7 @@ export function PropertyFormPage() {
           property.category.parentId ??
           '',
         subcategoryId: property.subcategoryId ?? property.categoryId ?? '',
+        isNegotiable: property.isNegotiable ?? false,
       })
     }
   }, [property])
@@ -112,6 +114,7 @@ export function PropertyFormPage() {
       purpose: form.purpose,
       parentCategoryId: form.parentCategoryId,
       ...(form.subcategoryId ? { subcategoryId: form.subcategoryId } : {}),
+      isNegotiable: form.isNegotiable,
     }
 
     if (form.purpose === 'RENT') {
@@ -233,6 +236,19 @@ export function PropertyFormPage() {
               <option value="RENT">{t('home.rent')}</option>
             </select>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            id="isNegotiable"
+            type="checkbox"
+            checked={form.isNegotiable}
+            onChange={(e) => setForm({ ...form, isNegotiable: e.target.checked })}
+          />
+          <Label htmlFor="isNegotiable" className="cursor-pointer">
+            {t('properties.isNegotiable')}
+          </Label>
+          <p className="text-xs text-muted-foreground">{t('properties.isNegotiableHint')}</p>
         </div>
 
         {form.purpose === 'RENT' && (

@@ -6,6 +6,7 @@ import {
   Home,
   Layers,
   LayoutDashboard,
+  HandCoins,
   Plus,
   ShieldCheck,
   User,
@@ -42,6 +43,12 @@ export const navSections: NavSection[] = [
     roles: ['OWNER'],
     items: [
       { to: '/owner/dashboard', labelKey: 'nav.myProperties', icon: LayoutDashboard },
+      {
+        to: '/owner/offers',
+        labelKey: 'nav.ownerOffers',
+        icon: HandCoins,
+        permission: 'offer.read',
+      },
       {
         to: '/owner/properties/new',
         labelKey: 'nav.addProperty',
