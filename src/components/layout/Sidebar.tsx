@@ -5,6 +5,7 @@ import { useMe } from '@/features/auth/useMe'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import { cn } from '@/lib/utils'
 import { navSections } from './nav-config'
+import { BrandName } from './BrandName'
 
 interface SidebarProps {
   open: boolean
@@ -75,7 +76,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <span className="flex size-9 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/20 transition-transform duration-200 group-hover:scale-105">
           <Building2 className="h-5 w-5" />
         </span>
-        <span className="text-lg">{t('app.name')}</span>
+        <BrandName size="md" inverted />
       </Link>
       <button
         type="button"

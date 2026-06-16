@@ -1,6 +1,7 @@
 import { Building2, ClipboardCheck, Plus, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { BrandName } from '@/components/layout/BrandName'
 import { PropertyCard } from '@/components/properties/PropertyCard'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -24,6 +25,7 @@ export function HomePage() {
     <div className="space-y-8">
       <section className="gradient-hero relative animate-fade-in-up overflow-hidden rounded-2xl px-6 py-8 text-white shadow-[var(--shadow-card)] md:px-10 md:py-10">
         <div className="relative z-10 max-w-2xl">
+          <BrandName size="lg" inverted className="mb-2" />
           <p className="mb-2 text-sm font-medium text-white/80">{t('app.tagline')}</p>
           <h1 className="text-2xl font-bold md:text-3xl">
             {me?.user ? `${t('home.welcome')}, ${me.user.name}` : t('home.hero')}

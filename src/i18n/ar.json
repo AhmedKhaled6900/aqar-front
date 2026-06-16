@@ -1,7 +1,8 @@
 {
   "app": {
-    "name": "عقار",
-    "tagline": "منصة تأجير العقارات"
+    "name": "وجهتك",
+    "nameSecondary": "العقارية",
+    "tagline": "منصتك لإيجار العقارات"
   },
   "sidebar": {
     "general": "عام",

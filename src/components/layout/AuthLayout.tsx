@@ -2,6 +2,7 @@ import { Building2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, Outlet } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BrandName } from './BrandName'
 
 export function AuthLayout() {
   const { t } = useTranslation()
@@ -20,7 +21,7 @@ export function AuthLayout() {
           <span className="flex size-11 items-center justify-center rounded-xl gradient-brand text-white shadow-[var(--shadow-soft)]">
             <Building2 className="h-6 w-6" />
           </span>
-          <span className="text-2xl font-bold">{t('app.name')}</span>
+          <BrandName size="lg" />
         </Link>
         <Card className="border-border/80 shadow-[var(--shadow-card)]">
           <CardHeader>
