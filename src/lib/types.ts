@@ -11,7 +11,7 @@ export type OwnerType = 'INDIVIDUAL' | 'COMPANY'
 
 export type OwnerPendingType = 'KYC_REVIEW' | 'EMAIL_NOT_VERIFIED'
 
-export type PropertyPurpose = 'SALE' | 'RENT'
+export type PropertyPurpose = 'RENT' | 'SALE' // SALE reserved for future sale feature
 
 export type PricePeriod = 'DAY' | 'MONTH' | 'YEAR'
 
@@ -22,6 +22,7 @@ export type PropertyStatus =
   | 'REJECTED'
   | 'SOLD'
   | 'RENTED'
+  | 'SUSPENDED'
 
 export interface User {
   id: string
@@ -89,6 +90,8 @@ export interface Property {
   ownerId: string
   owner?: { id: string; name: string }
   rejectionReason?: string | null
+  suspensionReason?: string | null
+  suspendedAt?: string | null
   submittedAt?: string | null
   approvedAt?: string | null
   isNegotiable?: boolean
@@ -312,6 +315,7 @@ export interface Attribute {
 }
 
 export interface SubcategoryAttributeItem extends Attribute {
+  attributeId?: string
   isRequired: boolean
   linkSortOrder: number
 }

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { PropertyReviewActions } from '@/components/properties/PropertyReviewActions'
+import { AdminPropertyManageActions } from '@/components/properties/AdminPropertyManageActions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
@@ -51,7 +52,13 @@ export function PendingPropertiesPage() {
                     </Button>
                   </div>
 
-                  <PropertyReviewActions propertyId={property.id} />
+                  <div className="flex flex-col gap-3">
+                    <PropertyReviewActions propertyId={property.id} />
+                    <AdminPropertyManageActions
+                      propertyId={property.id}
+                      status={property.status}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             )

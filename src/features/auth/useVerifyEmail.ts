@@ -3,6 +3,7 @@ import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import type { AuthResponse } from '@/lib/types'
 import { persistAuthResponse } from './auth-storage'
+import { toastMeta } from '@/lib/mutation-meta'
 
 interface VerifyEmailInput {
   email: string
@@ -14,6 +15,7 @@ export function useVerifyEmail() {
   const { setTokens } = useCookies()
 
   return useMutation({
+    meta: toastMeta.skipError(),
     mutationFn: async (input: VerifyEmailInput) => {
       const { data } = await axios.post<AuthResponse>('/auth/verify-email', input)
       persistAuthResponse(data, setTokens)

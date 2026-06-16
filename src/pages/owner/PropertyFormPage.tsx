@@ -29,6 +29,7 @@ import type {
   PropertyPurpose,
 } from '@/lib/types'
 import { isAttributeValueEmpty } from '@/lib/utils'
+import { useConfirm } from '@/hooks/use-confirm'
 
 const emptyForm = {
   title: '',
@@ -42,7 +43,7 @@ const emptyForm = {
   bedrooms: '',
   bathrooms: '',
   areaSize: '',
-  purpose: 'SALE' as PropertyPurpose,
+  purpose: 'RENT' as PropertyPurpose,
   pricePeriod: 'MONTH' as PricePeriod,
   parentCategoryId: '',
   subcategoryId: '',
@@ -80,6 +81,7 @@ export function PropertyFormPage() {
     PropertyCustomAttributeInput[]
   >([])
   const [error, setError] = useState('')
+  const { confirm, dialog } = useConfirm()
   const { data: subcategoryAttributes } = useSubcategoryAttributes(form.subcategoryId)
 
   const canEditMedia =
@@ -99,7 +101,7 @@ export function PropertyFormPage() {
         bedrooms: property.bedrooms != null ? String(property.bedrooms) : '',
         bathrooms: property.bathrooms != null ? String(property.bathrooms) : '',
         areaSize: property.areaSize != null ? String(property.areaSize) : '',
-        purpose: property.purpose,
+        purpose: 'RENT' as PropertyPurpose,
         pricePeriod: property.pricePeriod ?? 'MONTH',
         parentCategoryId:
           property.parentCategoryId ??
@@ -137,14 +139,14 @@ export function PropertyFormPage() {
       bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
       bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
       areaSize: form.areaSize ? Number(form.areaSize) : undefined,
-      purpose: form.purpose,
+      purpose: 'RENT' as PropertyPurpose,
       parentCategoryId: form.parentCategoryId,
+      pricePeriod: form.pricePeriod,
       ...(form.subcategoryId ? { subcategoryId: form.subcategoryId } : {}),
       isNegotiable: form.isNegotiable,
     }
 
-    const withRent =
-      form.purpose === 'RENT' ? { ...base, pricePeriod: form.pricePeriod } : base
+    const withRent = { ...base, pricePeriod: form.pricePeriod }
 
     if (!form.subcategoryId) return withRent
 
@@ -277,19 +279,18 @@ export function PropertyFormPage() {
             />
           </div>
           <div>
-            <Label>{t('properties.purpose')}</Label>
+            <Label>{t('properties.pricePeriod')}</Label>
             <select
               className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-              value={form.purpose}
+              value={form.pricePeriod}
               onChange={(e) =>
-                setForm({
-                  ...form,
-                  purpose: e.target.value as PropertyPurpose,
-                })
+                setForm({ ...form, pricePeriod: e.target.value as PricePeriod })
               }
+              required
             >
-              <option value="SALE">{t('home.sale')}</option>
-              <option value="RENT">{t('home.rent')}</option>
+              <option value="DAY">{t('properties.pricePeriodDay')}</option>
+              <option value="MONTH">{t('properties.pricePeriodMonth')}</option>
+              <option value="YEAR">{t('properties.pricePeriodYear')}</option>
             </select>
           </div>
         </div>
@@ -306,24 +307,6 @@ export function PropertyFormPage() {
           </Label>
           <p className="text-xs text-muted-foreground">{t('properties.isNegotiableHint')}</p>
         </div>
-
-        {form.purpose === 'RENT' && (
-          <div>
-            <Label>{t('properties.pricePeriod')}</Label>
-            <select
-              className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-              value={form.pricePeriod}
-              onChange={(e) =>
-                setForm({ ...form, pricePeriod: e.target.value as PricePeriod })
-              }
-              required
-            >
-              <option value="DAY">{t('properties.pricePeriodDay')}</option>
-              <option value="MONTH">{t('properties.pricePeriodMonth')}</option>
-              <option value="YEAR">{t('properties.pricePeriodYear')}</option>
-            </select>
-          </div>
-        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -433,7 +416,14 @@ export function PropertyFormPage() {
                   variant="destructive"
                   size="sm"
                   disabled={deleteVideo.isPending}
-                  onClick={() => deleteVideo.mutate()}
+                  onClick={() =>
+                    confirm({
+                      description: t('properties.deleteVideoConfirm'),
+                      onConfirm: async () => {
+                        await deleteVideo.mutateAsync()
+                      },
+                    })
+                  }
                 >
                   {t('properties.deleteVideo')}
                 </Button>
@@ -485,7 +475,14 @@ export function PropertyFormPage() {
                       size="sm"
                       className="mt-1 w-full"
                       disabled={deleteImage.isPending}
-                      onClick={() => deleteImage.mutate(img.id)}
+                      onClick={() =>
+                        confirm({
+                          description: t('properties.deleteImageConfirm'),
+                          onConfirm: async () => {
+                            await deleteImage.mutateAsync(img.id)
+                          },
+                        })
+                      }
                     >
                       {t('common.delete')}
                     </Button>
@@ -519,6 +516,7 @@ export function PropertyFormPage() {
           )}
         </div>
       </form>
+      {dialog}
     </div>
   )
 }

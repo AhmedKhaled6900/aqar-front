@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
+import { toastMeta } from '@/lib/mutation-meta'
 import type { OwnerProfile, OwnerType } from '@/lib/types'
 
 export function useOwnerProfile() {
@@ -35,6 +36,7 @@ export function useCompleteOwnerProfile() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async (input: CompleteOwnerProfileInput) => {
       const formData = new FormData()
       formData.append('ownerType', input.ownerType)

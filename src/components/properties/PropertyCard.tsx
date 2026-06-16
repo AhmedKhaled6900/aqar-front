@@ -16,9 +16,9 @@ export function PropertyCard({ property }: PropertyCardProps) {
     property.images.find((img) => img.isPrimary) ?? property.images[0]
 
   return (
-    <Link to={`/properties/${property.id}`}>
-      <Card className="overflow-hidden transition-shadow hover:shadow-md">
-        <div className="aspect-[4/3] bg-muted">
+    <Link to={`/properties/${property.id}`} className="group block">
+      <Card className="hover-lift overflow-hidden border-border/80">
+        <div className="image-zoom aspect-[4/3] bg-main-muted">
           {primaryImage ? (
             <img
               src={primaryImage.imageUrl}
@@ -33,11 +33,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
         </div>
         <CardContent className="p-4">
           <div className="mb-2 flex items-start justify-between gap-2">
-            <h3 className="line-clamp-1 font-semibold">{property.title}</h3>
+            <h3 className="line-clamp-1 font-semibold transition-colors group-hover:text-main">
+              {property.title}
+            </h3>
             <div className="flex shrink-0 flex-col items-end gap-1">
-              <Badge variant={property.purpose === 'SALE' ? 'default' : 'secondary'}>
-                {property.purpose === 'SALE' ? t('home.sale') : t('home.rent')}
-              </Badge>
+              <Badge variant="secondary">{t('home.rent')}</Badge>
               {property.status === 'RENTED' && (
                 <Badge variant="secondary">{t('status.RENTED')}</Badge>
               )}
@@ -47,7 +47,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             {formatPrice(Number(property.price), property.purpose, property.pricePeriod)}
           </p>
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4" />
+            <MapPin className="h-4 w-4 text-main/70" />
             <span>
               {property.city} — {property.area}
             </span>

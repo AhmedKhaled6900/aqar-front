@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { normalizePaginatedResponse } from '@/lib/api/pagination'
+import { toastMeta } from '@/lib/mutation-meta'
 import type {
   PaginatedResponse,
   PricePeriod,
@@ -12,7 +13,8 @@ import type {
 
 export interface PropertyFilters {
   purpose?: PropertyPurpose
-  categoryId?: string
+  subcategoryId?: string
+  parentCategoryId?: string
   city?: string
   page?: number
   limit?: number
@@ -73,6 +75,7 @@ export function useCreateProperty() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.created(),
     mutationFn: async (input: CreatePropertyInput) => {
       const { data } = await axios.post<Property>('/properties', input)
       return data
@@ -89,6 +92,7 @@ export function useUpdateProperty(id: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.updated(),
     mutationFn: async (input: Partial<CreatePropertyInput>) => {
       const { data } = await axios.patch<Property>(`/properties/${id}`, input)
       return data
@@ -105,25 +109,36 @@ export function useDeleteProperty() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.deleted(),
     mutationFn: async (id: string) => {
       const { data } = await axios.delete<{ message: string }>(`/properties/${id}`)
       return data
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['my-properties'] })
+      void queryClient.invalidateQueries({ queryKey: ['properties'] })
     },
   })
 }
 
-export function useMyProperties(status?: string, page = 1) {
+export function useMyProperties(
+  filters: {
+    status?: string
+    subcategoryId?: string
+    parentCategoryId?: string
+    page?: number
+    limit?: number
+  } = {},
+) {
   const axios = useAxiosInstance()
+  const { status, subcategoryId, parentCategoryId, page = 1, limit = 20 } = filters
 
   return useQuery({
-    queryKey: ['my-properties', status, page],
+    queryKey: ['my-properties', status, subcategoryId, parentCategoryId, page, limit],
     queryFn: async () => {
       const { data } = await axios.get<PaginatedResponse<Property>>(
         '/properties/my/list',
-        { params: { status, page } },
+        { params: { status, subcategoryId, parentCategoryId, page, limit } },
       )
       return data
     },
@@ -135,6 +150,7 @@ export function useUploadPropertyImages(propertyId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async ({
       images,
       primaryIndex,
@@ -167,6 +183,7 @@ export function useUpdatePropertyImage(propertyId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async ({
       imageId,
       isPrimary,
@@ -193,6 +210,7 @@ export function useDeletePropertyImage(propertyId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.deleted(),
     mutationFn: async (imageId: string) => {
       const { data } = await axios.delete<Property>(
         `/properties/${propertyId}/images/${imageId}`,
@@ -210,6 +228,7 @@ export function useUploadPropertyVideo(propertyId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async (video: File) => {
       const formData = new FormData()
       formData.append('video', video)
@@ -233,6 +252,7 @@ export function useDeletePropertyVideo(propertyId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.deleted(),
     mutationFn: async () => {
       const { data } = await axios.delete<{ message: string; property: Property }>(
         `/properties/${propertyId}/video`,
@@ -251,6 +271,7 @@ export function useSubmitProperty() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async (id: string) => {
       const { data } = await axios.post<Property>(`/properties/${id}/submit`)
       return data
@@ -262,28 +283,12 @@ export function useSubmitProperty() {
   })
 }
 
-export function useMarkPropertySold() {
-  const axios = useAxiosInstance()
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { data } = await axios.patch<{ message: string; property: Property }>(
-        `/properties/${id}/mark-sold`,
-      )
-      return data
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['my-properties'] })
-    },
-  })
-}
-
 export function useMarkPropertyRented() {
   const axios = useAxiosInstance()
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async (id: string) => {
       const { data } = await axios.patch<{ message: string; property: Property }>(
         `/properties/${id}/mark-rented`,

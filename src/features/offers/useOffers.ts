@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { normalizePaginatedResponse } from '@/lib/api/pagination'
+import { toastMeta } from '@/lib/mutation-meta'
 import type {
   CreateOfferInput,
   OwnerPropertyOffersGroup,
@@ -60,6 +61,7 @@ export function useAcceptOffer() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async (id: string) => {
       const { data } = await axios.post<PriceOffer>(`/offers/${id}/accept`)
       return data
@@ -79,6 +81,7 @@ export function useRejectOffer() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
       const { data } = await axios.post<PriceOffer>(`/offers/${id}/reject`, {
         reason,
@@ -96,6 +99,7 @@ export function useCounterOffer() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async ({ id, input }: { id: string; input: CreateOfferInput }) => {
       const { data } = await axios.post<PriceOffer>(`/offers/${id}/counter`, input)
       return data

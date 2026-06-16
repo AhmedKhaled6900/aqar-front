@@ -1,4 +1,4 @@
-import { History, Plus } from 'lucide-react'
+import { History, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { useMe } from '@/features/auth/useMe'
-import { useMarkPropertySold, useMyProperties } from '@/features/properties/useProperties'
+import { useDeleteProperty, useMyProperties } from '@/features/properties/useProperties'
+import { useConfirm } from '@/hooks/use-confirm'
 import type { Property } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
 
@@ -18,16 +19,26 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'warning' | 'destr
   PENDING: 'warning',
   APPROVED: 'success',
   REJECTED: 'destructive',
-  SOLD: 'default',
   RENTED: 'default',
+  SUSPENDED: 'warning',
 }
 
 export function OwnerDashboardPage() {
   const { t } = useTranslation()
   const { data: me } = useMe()
   const { data, isLoading } = useMyProperties()
-  const markSold = useMarkPropertySold()
+  const deleteMutation = useDeleteProperty()
+  const { confirm, dialog } = useConfirm()
   const [historyProperty, setHistoryProperty] = useState<Property | null>(null)
+
+  const handleDelete = (property: Property) => {
+    confirm({
+      description: t('properties.deleteConfirm'),
+      onConfirm: async () => {
+        await deleteMutation.mutateAsync(property.id)
+      },
+    })
+  }
 
   return (
     <div>
@@ -75,6 +86,11 @@ export function OwnerDashboardPage() {
                       {t('properties.rejectionReason')}: {property.rejectionReason}
                     </p>
                   )}
+                  {property.suspensionReason && (
+                    <p className="mt-1 text-sm text-warning">
+                      {t('admin.suspensionReason')}: {property.suspensionReason}
+                    </p>
+                  )}
                   {property.rental && (
                     <PropertyRentalCard rental={property.rental} compact />
                   )}
@@ -87,28 +103,25 @@ export function OwnerDashboardPage() {
                       </Link>
                     </Button>
                   )}
-                  {property.status === 'APPROVED' && property.purpose === 'SALE' && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={markSold.isPending}
-                      onClick={() => markSold.mutate(property.id)}
-                    >
-                      {t('properties.markSold')}
-                    </Button>
-                  )}
-                  {property.purpose === 'RENT' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setHistoryProperty(property)}
-                    >
-                      <History className="h-4 w-4" />
-                      {t('rental.viewHistory')}
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setHistoryProperty(property)}
+                  >
+                    <History className="h-4 w-4" />
+                    {t('rental.viewHistory')}
+                  </Button>
                   <Button variant="outline" size="sm" asChild>
                     <Link to={`/properties/${property.id}`}>{t('common.view')}</Link>
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={deleteMutation.isPending}
+                    onClick={() => handleDelete(property)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {t('common.delete')}
                   </Button>
                 </div>
               </CardContent>
@@ -129,6 +142,7 @@ export function OwnerDashboardPage() {
           }}
         />
       )}
+      {dialog}
     </div>
   )
 }

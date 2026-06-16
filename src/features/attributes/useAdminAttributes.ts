@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { normalizePaginatedResponse } from '@/lib/api/pagination'
+import { toastMeta } from '@/lib/mutation-meta'
 import type {
   Attribute,
   CreateAttributeInput,
@@ -65,6 +66,7 @@ export function useCreateAttribute() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.created(),
     mutationFn: async (input: CreateAttributeInput) => {
       const { data } = await axios.post<Attribute>('/admin/attributes', input)
       return data
@@ -83,6 +85,7 @@ export function useUpdateAttribute() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.updated(),
     mutationFn: async ({ id, input }: { id: string; input: UpdateAttributeInput }) => {
       const { data } = await axios.patch<Attribute>(`/admin/attributes/${id}`, input)
       return data
@@ -101,6 +104,7 @@ export function useDeleteAttribute() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.deleted(),
     mutationFn: async (id: string) => {
       const { data } = await axios.delete<{ message: string }>(
         `/admin/attributes/${id}`,
@@ -121,6 +125,7 @@ export function useSyncSubcategoryAttributes() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async ({
       subcategoryId,
       items,

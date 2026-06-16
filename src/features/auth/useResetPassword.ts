@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
+import { toastMeta } from '@/lib/mutation-meta'
 
 interface ResetPasswordInput {
   email?: string
@@ -12,6 +13,7 @@ export function useResetPassword() {
   const axios = useAxiosInstance()
 
   return useMutation({
+    meta: toastMeta.skipError(),
     mutationFn: async (input: ResetPasswordInput) => {
       const { data } = await axios.post<{ message: string }>(
         '/auth/reset-password',

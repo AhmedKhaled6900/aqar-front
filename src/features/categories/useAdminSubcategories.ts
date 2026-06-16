@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { normalizePaginatedResponse } from '@/lib/api/pagination'
+import { toastMeta } from '@/lib/mutation-meta'
 import type {
   AdminCategory,
   CreateSubcategoryInput,
@@ -46,6 +47,7 @@ export function useCreateSubcategory() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.created(),
     mutationFn: async ({
       parentId,
       input,
@@ -72,6 +74,7 @@ export function useUpdateSubcategory() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.updated(),
     mutationFn: async ({
       id,
       input,
@@ -101,6 +104,7 @@ export function useDeleteSubcategory() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.deleted(),
     mutationFn: async (id: string) => {
       const { data } = await axios.delete<{ message: string }>(
         `/admin/subcategories/${id}`,

@@ -36,16 +36,23 @@ export function PropertyDetailPage() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold">{property.title}</h1>
         <Badge>{property.category.name}</Badge>
-        <Badge variant="secondary">
-          {property.purpose === 'SALE' ? t('home.sale') : t('home.rent')}
-        </Badge>
+        <Badge variant="secondary">{t('home.rent')}</Badge>
         {property.status === 'RENTED' && (
           <Badge variant="default">{t('status.RENTED')}</Badge>
+        )}
+        {property.status === 'SUSPENDED' && (
+          <Badge variant="warning">{t('status.SUSPENDED')}</Badge>
         )}
         {property.isNegotiable && property.status === 'APPROVED' && (
           <Badge variant="outline">{t('properties.isNegotiable')}</Badge>
         )}
       </div>
+
+      {property.suspensionReason && (
+        <p className="mb-4 rounded-md border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+          {t('admin.suspensionReason')}: {property.suspensionReason}
+        </p>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="space-y-4">

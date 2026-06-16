@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "عقار",
-    "tagline": "منصة بيع وتأجير العقارات"
+    "tagline": "منصة تأجير العقارات"
   },
   "sidebar": {
     "general": "عام",
@@ -30,6 +30,7 @@
     "adminCategories": "التصنيفات",
     "adminSubcategories": "التصنيفات الفرعية",
     "adminAttributes": "خصائص العقارات",
+    "adminAttributeLinks": "ربط الخصائص",
     "adminPending": "قيد المراجعة"
   },
   "notFound": {
@@ -64,7 +65,19 @@
     "upload": "رفع",
     "next": "التالي",
     "previous": "السابق",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "confirm": "تأكيد",
+    "confirmTitle": "تأكيد الإجراء",
+    "clearFilter": "إزالة التصفية"
+  },
+  "toast": {
+    "success": "تمت العملية بنجاح",
+    "errorTitle": "حدث خطأ",
+    "error": "حدث خطأ غير متوقع",
+    "saved": "تم الحفظ بنجاح",
+    "deleted": "تم الحذف بنجاح",
+    "created": "تم الإنشاء بنجاح",
+    "updated": "تم التحديث بنجاح"
   },
   "categories": {
     "adminTitle": "إدارة التصنيفات",
@@ -77,6 +90,9 @@
     "subcategories": "الفرعية",
     "manageSubcategories": "إدارة ({{count}})",
     "propertyCount": "العقارات",
+    "viewProperties": "عرض ({{count}})",
+    "filteredBySubcategory": "تصنيف فرعي",
+    "filteredByParentCategory": "تصنيف رئيسي",
     "name": "الاسم",
     "slug": "الرابط (slug)",
     "description": "الوصف",
@@ -142,8 +158,8 @@
   "home": {
     "welcome": "مرحباً",
     "hero": "اعثر على عقارك المثالي",
+    "heroSubtitle": "اكتشف أفضل العقارات للإيجار في مكان واحد",
     "featured": "عقارات مميزة",
-    "sale": "للبيع",
     "rent": "للإيجار"
   },
   "properties": {
@@ -175,21 +191,20 @@
     "submitForReview": "إرسال للمراجعة",
     "isNegotiable": "قابل للتفاوض على السعر",
     "isNegotiableHint": "يسمح للعملاء المسجّلين بإرسال عروض سعر على هذا العقار",
-    "markSold": "تعيين كمباع",
-    "markRented": "تعيين كمؤجر",
     "draft": "مسودة",
     "pending": "قيد المراجعة",
     "approved": "معتمد",
     "rejected": "مرفوض",
-    "sold": "مباع",
-    "rented": "مؤجر",
     "uploadImages": "رفع صور",
     "video": "فيديو العقار",
     "videoHint": "اختياري — MP4 أو WebM أو MOV (حد أقصى 50 ميجابايت)",
     "uploadVideo": "رفع الفيديو",
     "deleteVideo": "حذف الفيديو",
+    "deleteVideoConfirm": "هل أنت متأكد من حذف فيديو العقار؟",
+    "deleteImageConfirm": "هل أنت متأكد من حذف هذه الصورة؟",
     "setPrimary": "تعيين كصورة رئيسية",
-    "rejectionReason": "سبب الرفض"
+    "rejectionReason": "سبب الرفض",
+    "deleteConfirm": "هل أنت متأكد من حذف هذا العقار؟ لا يمكن التراجع عن هذا الإجراء."
   },
   "owner": {
     "dashboard": "لوحة تحكم المالك",
@@ -228,6 +243,13 @@
     "ownerName": "اسم المالك",
     "propertyTitle": "عنوان العقار",
     "rejectReason": "سبب الرفض",
+    "suspend": "إيقاف العقار",
+    "reactivate": "إعادة التفعيل",
+    "suspensionReason": "سبب الإيقاف",
+    "suspensionReasonOptional": "اختياري — يظهر للمالك",
+    "suspendConfirm": "سيتم إخفاء العقار من الكتالوج دون حذفه",
+    "reactivateConfirm": "هل تريد إعادة تفعيل هذا العقار وإظهاره في الكتالوج؟",
+    "deletePropertyConfirm": "هل أنت متأكد من حذف هذا العقار نهائياً؟ سيتم حذف الصور والبيانات المرتبطة.",
     "documents": "المستندات",
     "viewDetails": "عرض التفاصيل",
     "ownerDetails": "تفاصيل المالك",
@@ -283,7 +305,14 @@
   },
   "attributes": {
     "adminTitle": "خصائص العقارات",
-    "adminDesc": "اختر التصنيف الفرعي أولاً ثم أضف الخصائص المرتبطة به",
+    "catalogDesc": "كتالوج خصائص النظام (SYSTEM) — إنشاء وتعديل وحذف",
+    "adminDesc": "إدارة خصائص العقارات",
+    "linkToSubcategories": "ربط بالتصنيفات الفرعية",
+    "linkPageTitle": "ربط الخصائص بالتصنيفات الفرعية",
+    "linkPageDesc": "اختر التصنيف الفرعي ثم اربط الخصائص من الكتالوج",
+    "linkingTo": "الربط مع",
+    "saveLinks": "حفظ الروابط",
+    "invalidAttributeId": "معرّف الخاصية غير صالح. أعد تحميل الصفحة وحاول مرة أخرى.",
     "selectSubcategory": "— اختر التصنيف الفرعي —",
     "selectSubcategoryFirst": "اختر التصنيف الرئيسي والتصنيف الفرعي لعرض وإدارة الخصائص",
     "emptyForSubcategory": "لا توجد خصائص مرتبطة بهذا التصنيف الفرعي",
@@ -354,6 +383,7 @@
     "PENDING": "قيد المراجعة",
     "APPROVED": "معتمد",
     "SOLD": "مباع",
-    "RENTED": "مؤجر"
+    "RENTED": "مؤجر",
+    "SUSPENDED": "موقوف"
   }
 }

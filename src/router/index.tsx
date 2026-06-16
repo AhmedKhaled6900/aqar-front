@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { AdminAttributeLinksPage } from '@/pages/admin/AdminAttributeLinksPage'
 import { AdminAttributesPage } from '@/pages/admin/AdminAttributesPage'
 import { AdminCategoriesPage } from '@/pages/admin/AdminCategoriesPage'
 import { AdminSubcategoriesPage } from '@/pages/admin/AdminSubcategoriesPage'
@@ -140,6 +141,15 @@ export const router = createBrowserRouter([
                 element: <PermissionGuard permission="attribute.read" />,
                 children: [
                   { path: 'admin/attributes', element: <AdminAttributesPage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="attribute.update" />,
+                children: [
+                  {
+                    path: 'admin/attributes/links',
+                    element: <AdminAttributeLinksPage />,
+                  },
                 ],
               },
             ],

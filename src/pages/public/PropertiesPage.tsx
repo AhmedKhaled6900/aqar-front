@@ -12,7 +12,11 @@ import {
 
 export function PropertiesPage() {
   const { t } = useTranslation()
-  const [filters, setFilters] = useState<PropertyFilters>({ page: 1, limit: 12 })
+  const [filters, setFilters] = useState<PropertyFilters>({
+    page: 1,
+    limit: 12,
+    purpose: 'RENT',
+  })
   const { data: categories = [] } = useCategories()
   const { data, isLoading } = useProperties(filters)
 

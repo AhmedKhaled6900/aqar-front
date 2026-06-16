@@ -7,6 +7,7 @@ import {
 import type { AxiosInstance } from 'axios'
 import { useLocation } from 'react-router-dom'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
+import { toastMeta } from '@/lib/mutation-meta'
 import type {
   AdminOwnerListItem,
   OwnerProfile,
@@ -163,6 +164,7 @@ export function useApproveOwner() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async (userId: string) => {
       const { data } = await axios.patch<{ message: string; profile: OwnerProfile }>(
         `/admin/owners/${userId}/approve`,
@@ -181,6 +183,7 @@ export function useRejectOwner() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
       const { data } = await axios.patch<{ message: string; profile: OwnerProfile }>(
         `/admin/owners/${userId}/reject`,
@@ -195,15 +198,24 @@ export function useRejectOwner() {
   })
 }
 
-export function useAdminProperties(status?: string, page = 1) {
+export function useAdminProperties(
+  filters: {
+    status?: string
+    subcategoryId?: string
+    parentCategoryId?: string
+    page?: number
+    limit?: number
+  } = {},
+) {
   const axios = useAxiosInstance()
+  const { status, subcategoryId, parentCategoryId, page = 1, limit = 20 } = filters
 
   return useQuery({
-    queryKey: ['admin', 'properties', status, page],
+    queryKey: ['admin', 'properties', status, subcategoryId, parentCategoryId, page, limit],
     queryFn: async () => {
       const { data } = await axios.get<PaginatedResponse<Property>>(
         '/admin/properties',
-        { params: { status, page } },
+        { params: { status, subcategoryId, parentCategoryId, page, limit } },
       )
       return data
     },
@@ -229,6 +241,7 @@ export function useApproveProperty() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async (id: string) => {
       const { data } = await axios.patch<Property>(
         `/admin/properties/${id}/approve`,
@@ -246,6 +259,7 @@ export function useRejectProperty() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    meta: toastMeta.saved(),
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const { data } = await axios.patch<Property>(
         `/admin/properties/${id}/reject`,
@@ -255,6 +269,65 @@ export function useRejectProperty() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'properties'] })
+    },
+  })
+}
+
+export function useSuspendProperty() {
+  const axios = useAxiosInstance()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    meta: toastMeta.saved(),
+    mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
+      const { data } = await axios.patch<{ message: string; property: Property }>(
+        `/admin/properties/${id}/suspend`,
+        { reason },
+      )
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'properties'] })
+      void queryClient.invalidateQueries({ queryKey: ['properties'] })
+    },
+  })
+}
+
+export function useReactivateProperty() {
+  const axios = useAxiosInstance()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    meta: toastMeta.saved(),
+    mutationFn: async (id: string) => {
+      const { data } = await axios.patch<{ message: string; property: Property }>(
+        `/admin/properties/${id}/reactivate`,
+      )
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'properties'] })
+      void queryClient.invalidateQueries({ queryKey: ['properties'] })
+    },
+  })
+}
+
+export function useAdminDeleteProperty() {
+  const axios = useAxiosInstance()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    meta: toastMeta.deleted(),
+    mutationFn: async (id: string) => {
+      const { data } = await axios.delete<{ message: string }>(
+        `/admin/properties/${id}`,
+      )
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'properties'] })
+      void queryClient.invalidateQueries({ queryKey: ['properties'] })
+      void queryClient.invalidateQueries({ queryKey: ['my-properties'] })
     },
   })
 }

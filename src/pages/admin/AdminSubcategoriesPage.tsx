@@ -1,7 +1,7 @@
-import { Layers, Link2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Building2, Layers, Link2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { SubcategoryAttributesDialog } from '@/components/attributes/SubcategoryAttributesDialog'
 import { SubcategoryFormDialog } from '@/components/categories/SubcategoryFormDialog'
 import { DataTable, type DataTableColumn } from '@/components/ui/data-table'
@@ -15,6 +15,7 @@ import {
   useAdminSubcategoriesList,
   useDeleteSubcategory,
 } from '@/features/categories/useAdminSubcategories'
+import { useConfirm } from '@/hooks/use-confirm'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import type { AdminCategory } from '@/lib/types'
 
@@ -48,11 +49,13 @@ export function AdminSubcategoriesPage() {
   )
   const { data, isLoading } = useAdminSubcategoriesList(page, PAGE_SIZE, listFilters)
   const deleteMutation = useDeleteSubcategory()
+  const { confirm, dialog } = useConfirm()
 
   const canCreate = hasPermission('category.create')
   const canUpdate = hasPermission('category.update')
   const canDelete = hasPermission('category.delete')
   const canLinkAttributes = hasPermission('attribute.update')
+  const canReadProperties = hasPermission('property.read')
 
   const handleParentFilterChange = (nextParentId: string) => {
     setPage(1)
@@ -73,15 +76,14 @@ export function AdminSubcategoriesPage() {
     setDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm(t('categories.deleteSubcategoryConfirm'))) return
-    setError('')
-    try {
-      await deleteMutation.mutateAsync(id)
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } }
-      setError(axiosErr.response?.data?.message ?? t('common.error'))
-    }
+  const handleDelete = (id: string) => {
+    confirm({
+      description: t('categories.deleteSubcategoryConfirm'),
+      onConfirm: async () => {
+        setError('')
+        await deleteMutation.mutateAsync(id)
+      },
+    })
   }
 
   const columns = useMemo<DataTableColumn<AdminCategory>[]>(
@@ -109,7 +111,20 @@ export function AdminSubcategoriesPage() {
       {
         id: 'properties',
         header: t('categories.propertyCount'),
-        cell: (row) => row.propertyCount ?? 0,
+        cell: (row) => {
+          const count = row.propertyCount ?? 0
+          if (!canReadProperties) return count
+          return (
+            <Button variant="link" className="h-auto p-0" asChild>
+              <Link
+                to={`/admin/properties?subcategoryId=${row.id}&subcategoryName=${encodeURIComponent(row.name)}`}
+              >
+                <Building2 className="h-4 w-4" />
+                {t('categories.viewProperties', { count })}
+              </Link>
+            </Button>
+          )
+        },
       },
       {
         id: 'isActive',
@@ -156,7 +171,7 @@ export function AdminSubcategoriesPage() {
         ),
       },
     ],
-    [t, canUpdate, canDelete, canLinkAttributes, deleteMutation.isPending],
+    [t, canUpdate, canDelete, canLinkAttributes, canReadProperties, deleteMutation.isPending],
   )
 
   if (loadingMain || isLoading) {
@@ -249,6 +264,7 @@ export function AdminSubcategoriesPage() {
           subcategoryName={linkingSubcategory.name}
         />
       )}
+      {dialog}
     </div>
   )
 }

@@ -12,6 +12,7 @@ import {
   useAdminCategories,
   useDeleteCategory,
 } from '@/features/categories/useAdminCategories'
+import { useConfirm } from '@/hooks/use-confirm'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import type { AdminCategory } from '@/lib/types'
 
@@ -34,6 +35,7 @@ export function AdminCategoriesPage() {
 
   const { data, isLoading } = useAdminCategories(page, PAGE_SIZE, filters)
   const deleteMutation = useDeleteCategory()
+  const { confirm, dialog } = useConfirm()
 
   const canCreate = hasPermission('category.create')
   const canUpdate = hasPermission('category.update')
@@ -50,15 +52,14 @@ export function AdminCategoriesPage() {
     setDialogOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm(t('categories.deleteConfirm'))) return
-    setError('')
-    try {
-      await deleteMutation.mutateAsync(id)
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } }
-      setError(axiosErr.response?.data?.message ?? t('common.error'))
-    }
+  const handleDelete = (id: string) => {
+    confirm({
+      description: t('categories.deleteConfirm'),
+      onConfirm: async () => {
+        setError('')
+        await deleteMutation.mutateAsync(id)
+      },
+    })
   }
 
   const columns = useMemo<DataTableColumn<AdminCategory>[]>(
@@ -182,6 +183,7 @@ export function AdminCategoriesPage() {
         onOpenChange={setDialogOpen}
         category={editingCategory}
       />
+      {dialog}
     </div>
   )
 }

@@ -29,10 +29,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background px-4">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border/80 bg-background/85 px-4 shadow-sm backdrop-blur-md">
       <button
         type="button"
-        className="text-foreground lg:hidden"
+        className="rounded-md p-1.5 text-foreground transition-colors hover:bg-main-muted hover:text-main lg:hidden"
         onClick={onMenuClick}
         aria-label="menu"
       >
@@ -46,8 +46,8 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <>
             <NotificationBell />
             <div className="text-left">
-              <p className="text-sm font-medium leading-tight">{user.name}</p>
-              <Badge variant="secondary" className="text-[10px]">
+              <p className="text-sm font-semibold leading-tight text-foreground">{user.name}</p>
+              <Badge variant="secondary" className="mt-0.5 bg-main-muted text-main text-[10px]">
                 {t(`roles.${user.role}`)}
               </Badge>
             </div>

@@ -1,13 +1,16 @@
-import { Plus } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { PropertyReviewActions } from '@/components/properties/PropertyReviewActions'
+import { AdminPropertyManageActions } from '@/components/properties/AdminPropertyManageActions'
+import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { useAdminProperties } from '@/features/admin/useAdmin'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import type { PropertyStatus } from '@/lib/types'
 import { formatDateAr, formatOfferPrice, formatPrice } from '@/lib/utils'
@@ -17,17 +20,44 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'warning' | 'destr
   PENDING: 'warning',
   APPROVED: 'success',
   REJECTED: 'destructive',
-  SOLD: 'default',
   RENTED: 'default',
+  SUSPENDED: 'warning',
 }
 
 export function AdminPropertiesPage() {
   const { t } = useTranslation()
   const { hasPermission } = useCookies()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const subcategoryId =
+    searchParams.get('subcategoryId') ?? searchParams.get('categoryId') ?? undefined
+  const subcategoryName =
+    searchParams.get('subcategoryName') ??
+    searchParams.get('categoryName') ??
+    undefined
+  const parentCategoryId = searchParams.get('parentCategoryId') ?? undefined
+  const parentCategoryName = searchParams.get('parentCategoryName') ?? undefined
   const [status, setStatus] = useState<PropertyStatus | ''>('')
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useAdminProperties(status || undefined, page)
+  const { data, isLoading, isError, error } = useAdminProperties({
+    status: status || undefined,
+    subcategoryId,
+    parentCategoryId,
+    page,
+  })
   const canCreate = hasPermission('property.create')
+
+  const clearCategoryFilter = () => {
+    setPage(1)
+    setSearchParams((params) => {
+      params.delete('subcategoryId')
+      params.delete('subcategoryName')
+      params.delete('categoryId')
+      params.delete('categoryName')
+      params.delete('parentCategoryId')
+      params.delete('parentCategoryName')
+      return params
+    })
+  }
 
   return (
     <div>
@@ -43,6 +73,32 @@ export function AdminPropertiesPage() {
         )}
       </div>
 
+      {(subcategoryId || parentCategoryId) && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Badge variant="secondary" className="gap-1 py-1.5 pe-1">
+            {subcategoryId
+              ? `${t('categories.filteredBySubcategory')}: ${subcategoryName ?? subcategoryId}`
+              : `${t('categories.filteredByParentCategory')}: ${parentCategoryName ?? parentCategoryId}`}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 hover:bg-transparent"
+              onClick={clearCategoryFilter}
+              aria-label={t('common.clearFilter')}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </Badge>
+        </div>
+      )}
+
+      {isError && (
+        <Alert variant="destructive" className="mb-4">
+          {getApiErrorMessage(error)}
+        </Alert>
+      )}
+
       <select
         className="mb-6 flex h-10 w-full max-w-xs rounded-md border border-border bg-background px-3 text-sm"
         value={status}
@@ -52,7 +108,7 @@ export function AdminPropertiesPage() {
         }}
       >
         <option value="">{t('common.all')}</option>
-        {(['DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'SOLD', 'RENTED'] as const).map(
+        {(['DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'RENTED', 'SUSPENDED'] as const).map(
           (s) => (
             <option key={s} value={s}>
               {t(`status.${s}`)}
@@ -105,11 +161,20 @@ export function AdminPropertiesPage() {
                         </p>
                       </div>
                     )}
+                    {property.suspensionReason && (
+                      <p className="mt-1 text-sm text-warning">
+                        {t('admin.suspensionReason')}: {property.suspensionReason}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {property.status === 'PENDING' && (
                       <PropertyReviewActions propertyId={property.id} />
                     )}
+                    <AdminPropertyManageActions
+                      propertyId={property.id}
+                      status={property.status}
+                    />
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/properties/${property.id}`}>{t('common.view')}</Link>
                     </Button>

@@ -10,6 +10,7 @@ import {
   useAcceptOffer,
   useRejectOffer,
 } from '@/features/offers/useOffers'
+import { useConfirm } from '@/hooks/use-confirm'
 import type { PriceOffer } from '@/lib/types'
 import { formatOfferPrice, formatRentalDuration } from '@/lib/utils'
 
@@ -23,19 +24,21 @@ export function OwnerOfferCard({ offer }: OwnerOfferCardProps) {
   const rejectMutation = useRejectOffer()
   const [counterOpen, setCounterOpen] = useState(false)
   const [error, setError] = useState('')
+  const { confirm, dialog } = useConfirm()
 
   const canRespond = canOwnerRespond(offer)
   const isPending = acceptMutation.isPending || rejectMutation.isPending
 
-  const handleAccept = async () => {
-    if (!window.confirm(t('offers.acceptConfirm'))) return
-    setError('')
-    try {
-      await acceptMutation.mutateAsync(offer.id)
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } }
-      setError(axiosErr.response?.data?.message ?? t('common.error'))
-    }
+  const handleAccept = () => {
+    confirm({
+      description: t('offers.acceptConfirm'),
+      confirmLabel: t('common.approve'),
+      variant: 'default',
+      onConfirm: async () => {
+        setError('')
+        await acceptMutation.mutateAsync(offer.id)
+      },
+    })
   }
 
   const handleReject = async () => {
@@ -166,6 +169,7 @@ export function OwnerOfferCard({ offer }: OwnerOfferCardProps) {
         defaultDuration={offer.latestRound?.duration ?? 12}
         defaultPricePeriod={offer.latestRound?.pricePeriod ?? 'MONTH'}
       />
+      {dialog}
     </>
   )
 }

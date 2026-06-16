@@ -7,18 +7,24 @@ export function AuthLayout() {
   const { t } = useTranslation()
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <div className="w-full max-w-md">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div className="pointer-events-none absolute inset-0 gradient-page" />
+      <div className="pointer-events-none absolute -left-24 -top-24 size-72 rounded-full bg-main/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 size-72 rounded-full bg-accent/10 blur-3xl" />
+
+      <div className="relative w-full max-w-md animate-scale-in">
         <Link
           to="/"
-          className="mb-6 flex items-center justify-center gap-2 text-main"
+          className="mb-6 flex items-center justify-center gap-2 text-main transition-opacity hover:opacity-80"
         >
-          <Building2 className="h-8 w-8" />
+          <span className="flex size-11 items-center justify-center rounded-xl gradient-brand text-white shadow-[var(--shadow-soft)]">
+            <Building2 className="h-6 w-6" />
+          </span>
           <span className="text-2xl font-bold">{t('app.name')}</span>
         </Link>
-        <Card>
+        <Card className="border-border/80 shadow-[var(--shadow-card)]">
           <CardHeader>
-            <CardTitle className="text-center">{t('app.tagline')}</CardTitle>
+            <CardTitle className="text-center text-main">{t('app.tagline')}</CardTitle>
           </CardHeader>
           <CardContent>
             <Outlet />
