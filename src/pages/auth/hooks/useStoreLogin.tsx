@@ -1,18 +1,21 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useLogin } from '@/features/auth/useLogin'
-import { getPostLoginPath } from '@/lib/auth-redirect'
+import { useAxiosInstance } from '@/hooks/useAxiosInstance'
+import { resolvePostLoginPath } from '@/lib/auth-redirect'
 
 export function useStoreLogin() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const axios = useAxiosInstance()
   const loginMutation = useLogin()
 
   const login = async (email: string, password: string) => {
     try {
       const data = await loginMutation.mutateAsync({ email, password })
       await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] })
-      navigate(getPostLoginPath(data.user))
+      const path = await resolvePostLoginPath(axios, data.user)
+      navigate(path)
       return { success: true as const }
     } catch (error: unknown) {
       const err = error as {

@@ -7,12 +7,14 @@
   "sidebar": {
     "general": "عام",
     "owner": "المالك",
+    "provider": "مقدم الخدمة",
     "admin": "الإدارة"
   },
   "roles": {
     "ADMIN": "مدير",
     "OWNER": "مالك",
-    "CUSTOMER": "عميل"
+    "CUSTOMER": "عميل",
+    "SERVICE_PROVIDER": "مقدم خدمة"
   },
   "nav": {
     "home": "الرئيسية",
@@ -32,7 +34,15 @@
     "adminSubcategories": "التصنيفات الفرعية",
     "adminAttributes": "خصائص العقارات",
     "adminAttributeLinks": "ربط الخصائص",
-    "adminPending": "قيد المراجعة"
+    "adminPending": "قيد المراجعة",
+    "providerDashboard": "لوحة التحكم",
+    "providerProfile": "الملف والتحقق",
+    "providerCoverage": "مناطق التغطية",
+    "providerListings": "الإعلانات",
+    "providerOrders": "الأوردرات",
+    "providerLeads": "طلبات النقل",
+    "adminProviders": "مراجعة مقدمي الخدمة",
+    "adminServiceCategories": "فئات الخدمات"
   },
   "notFound": {
     "title": "الصفحة غير موجودة",
@@ -139,6 +149,7 @@
     "role": "نوع الحساب",
     "customer": "عميل",
     "owner": "مالك عقار",
+    "serviceProvider": "مقدم خدمة",
     "loginButton": "دخول",
     "registerButton": "تسجيل",
     "noAccount": "ليس لديك حساب؟",
@@ -225,8 +236,100 @@
     "kycRejected": "تم رفض الملف",
     "resubmit": "إعادة التقديم"
   },
+  "provider": {
+    "setupTitle": "إعداد ملف مقدم الخدمة",
+    "setupDesc": "أكمل بيانات نشاطك التجاري للبدء",
+    "profileTitle": "ملف مقدم الخدمة",
+    "dashboard": "لوحة التحكم",
+    "coverage": "مناطق التغطية",
+    "coverageDesc": "حدد المدن والمناطق التي تغطيها خدمتك",
+    "listings": "الإعلانات والمنيو",
+    "listingsDesc": "أنشئ إعلاناً مجانياً لعرض خدماتك",
+    "orders": "الأوردرات",
+    "leads": "طلبات النقل",
+    "businessName": "اسم النشاط",
+    "category": "فئة الخدمة",
+    "selectCategory": "اختر الفئة",
+    "categoryRequired": "يجب اختيار فئة الخدمة",
+    "description": "الوصف",
+    "whatsapp": "واتساب",
+    "logo": "الشعار",
+    "nationalId": "الهوية الوطنية",
+    "commercialRegister": "السجل التجاري",
+    "submitForReview": "إرسال للمراجعة",
+    "kycRequired": "يرجى رفع الهوية أو السجل التجاري",
+    "rejectionReason": "سبب الرفض",
+    "pendingReview": "قيد مراجعة الإدارة",
+    "pendingMessage": "ملفك قيد المراجعة. سيتم إخطارك عند الموافقة.",
+    "suspended": "الحساب موقوف",
+    "suspendedMessage": "تم إيقاف حسابك مؤقتاً. تواصل مع الإدارة للمزيد.",
+    "listingTitle": "عنوان الإعلان",
+    "menuItems": "عناصر المنيو",
+    "menuItemsPlaceholder": "اسم الصنف | السعر\nمثال: كشري | 25",
+    "deleteListingConfirm": "هل أنت متأكد من حذف هذا الإعلان؟",
+    "deleteCoverageConfirm": "هل أنت متأكد من حذف منطقة التغطية؟",
+    "noListings": "لا توجد إعلانات بعد",
+    "noCoverage": "لم تُضف مناطق تغطية بعد",
+    "wholeCity": "المدينة كاملة",
+    "cityPlaceholder": "مثال: الإسكندرية",
+    "areaOptional": "اختياري — اتركه فارغاً لتغطية المدينة",
+    "inactive": "غير نشط",
+    "activate": "تفعيل",
+    "deactivate": "إيقاف",
+    "pauseListing": "إيقاف مؤقت",
+    "publishListing": "نشر الإعلان",
+    "subtotal": "المجموع الفرعي",
+    "deliveryFee": "رسوم التوصيل",
+    "providerNet": "صافي الربح",
+    "commissionRate": "نسبة العمولة",
+    "passengers": "عدد الركاب",
+    "markLost": "تسجيل كخسارة",
+    "listingStatus": {
+      "DRAFT": "مسودة",
+      "ACTIVE": "نشط",
+      "PAUSED": "موقوف"
+    },
+    "orderStatus": {
+      "PENDING": "بانتظار القبول",
+      "ACCEPTED": "مقبول",
+      "PREPARING": "قيد التحضير",
+      "OUT_FOR_DELIVERY": "في الطريق",
+      "DELIVERED": "تم التسليم",
+      "REJECTED": "مرفوض",
+      "CANCELLED": "ملغي"
+    },
+    "orderAction": {
+      "PREPARING": "بدء التحضير",
+      "OUT_FOR_DELIVERY": "خرج للتوصيل",
+      "DELIVERED": "تم التسليم"
+    },
+    "leadStatus": {
+      "NEW": "جديد",
+      "CONTACTED": "تم التواصل",
+      "QUOTED": "تم التسعير",
+      "COMPLETED": "مكتمل",
+      "LOST": "خسارة"
+    },
+    "leadAction": {
+      "CONTACTED": "تم التواصل",
+      "QUOTED": "تم التسعير",
+      "COMPLETED": "إكمال"
+    },
+    "stats": {
+      "totalOrders": "إجمالي الأوردرات",
+      "delivered": "تم التسليم",
+      "acceptanceRate": "نسبة القبول",
+      "providerNet": "صافي الأرباح",
+      "totalSales": "إجمالي المبيعات",
+      "platformFee": "عمولة المنصة",
+      "leads": "طلبات النقل"
+    }
+  },
   "admin": {
     "pendingOwners": "ملاك بانتظار المراجعة",
+    "pendingProviders": "مقدمو خدمة بانتظار المراجعة",
+    "serviceCategories": "فئات الخدمات",
+    "serviceCategoriesDesc": "إدارة فئات الخدمات ونسب العمولة",
     "allOwners": "جميع الملاك",
     "allOwnersDesc": "قائمة بكل الملاك المسجلين في المنصة",
     "profileCompletion": "اكتمال الملف",

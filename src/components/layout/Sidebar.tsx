@@ -2,6 +2,7 @@ import { Building2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useMe } from '@/features/auth/useMe'
+import { useProviderPendingOrdersCount } from '@/features/service-provider/useProviderOrders'
 import { useCookies } from '@/lib/token-managament/useCookies'
 import { cn } from '@/lib/utils'
 import { navSections } from './nav-config'
@@ -18,6 +19,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { hasPermission } = useCookies()
   const { data } = useMe()
   const role = data?.user.role
+  const pendingOrdersCount = useProviderPendingOrdersCount()
+
+  const getBadgeCount = (badgeKey?: string) => {
+    if (badgeKey === 'provider.pendingOrders') return pendingOrdersCount
+    return 0
+  }
 
   const visibleSections = navSections
     .filter((section) => !section.roles || (role && section.roles.includes(role)))
@@ -57,7 +64,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 }}
               >
                 <item.icon className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                {t(item.labelKey)}
+                <span className="flex-1">{t(item.labelKey)}</span>
+                {item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
+                  <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-white">
+                    {getBadgeCount(item.badgeKey)}
+                  </span>
+                )}
               </NavLink>
             ))}
           </div>

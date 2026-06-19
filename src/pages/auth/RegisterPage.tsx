@@ -13,7 +13,7 @@ const schema = yup.object({
   email: yup.string().email().required(),
   phone: yup.string().required(),
   password: yup.string().min(8).required(),
-  role: yup.string().oneOf(['CUSTOMER', 'OWNER']).required(),
+  role: yup.string().oneOf(['CUSTOMER', 'OWNER', 'SERVICE_PROVIDER']).required(),
 })
 
 export function RegisterPage() {
@@ -25,7 +25,7 @@ export function RegisterPage() {
     email: '',
     phone: '',
     password: '',
-    role: 'CUSTOMER' as 'CUSTOMER' | 'OWNER',
+    role: 'CUSTOMER' as 'CUSTOMER' | 'OWNER' | 'SERVICE_PROVIDER',
   })
   const [error, setError] = useState('')
 
@@ -105,11 +105,12 @@ export function RegisterPage() {
           className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
           value={form.role}
           onChange={(e) =>
-            setForm({ ...form, role: e.target.value as 'CUSTOMER' | 'OWNER' })
+            setForm({ ...form, role: e.target.value as typeof form.role })
           }
         >
           <option value="CUSTOMER">{t('auth.customer')}</option>
           <option value="OWNER">{t('auth.owner')}</option>
+          <option value="SERVICE_PROVIDER">{t('auth.serviceProvider')}</option>
         </select>
       </div>
 

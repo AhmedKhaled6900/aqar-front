@@ -9,8 +9,13 @@ import {
   HandCoins,
   Link2,
   ListChecks,
+  List,
+  MapPin,
+  Package,
   Plus,
   ShieldCheck,
+  Store,
+  Truck,
   User,
   Users,
   type LucideIcon,
@@ -23,6 +28,7 @@ export interface NavItem {
   icon: LucideIcon
   end?: boolean
   permission?: string
+  badgeKey?: 'provider.pendingOrders'
   isActiveMatch?: (pathname: string) => boolean
 }
 
@@ -66,6 +72,49 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    titleKey: 'sidebar.provider',
+    roles: ['SERVICE_PROVIDER'],
+    items: [
+      {
+        to: '/provider/dashboard',
+        labelKey: 'nav.providerDashboard',
+        icon: LayoutDashboard,
+        permission: 'provider.dashboard.read',
+      },
+      {
+        to: '/provider/profile',
+        labelKey: 'nav.providerProfile',
+        icon: User,
+        permission: 'provider.profile.read',
+      },
+      {
+        to: '/provider/coverage',
+        labelKey: 'nav.providerCoverage',
+        icon: MapPin,
+        permission: 'provider.coverage.manage',
+      },
+      {
+        to: '/provider/listings',
+        labelKey: 'nav.providerListings',
+        icon: List,
+        permission: 'provider.listing.manage',
+      },
+      {
+        to: '/provider/orders',
+        labelKey: 'nav.providerOrders',
+        icon: Package,
+        permission: 'provider.order.read',
+        badgeKey: 'provider.pendingOrders',
+      },
+      {
+        to: '/provider/leads',
+        labelKey: 'nav.providerLeads',
+        icon: Truck,
+        permission: 'provider.lead.read',
+      },
+    ],
+  },
+  {
     titleKey: 'sidebar.admin',
     roles: ['ADMIN'],
     items: [
@@ -80,6 +129,12 @@ export const navSections: NavSection[] = [
         labelKey: 'nav.adminOwners',
         icon: ShieldCheck,
         permission: 'owner.review',
+      },
+      {
+        to: '/admin/providers/pending',
+        labelKey: 'nav.adminProviders',
+        icon: Store,
+        permission: 'provider.review',
       },
       {
         to: '/admin/properties/pending',
@@ -98,6 +153,13 @@ export const navSections: NavSection[] = [
         labelKey: 'nav.adminCategories',
         icon: FolderTree,
         permission: 'category.read',
+        end: true,
+      },
+      {
+        to: '/admin/service-categories',
+        labelKey: 'nav.adminServiceCategories',
+        icon: Store,
+        permission: 'service.category.read',
         end: true,
       },
       {

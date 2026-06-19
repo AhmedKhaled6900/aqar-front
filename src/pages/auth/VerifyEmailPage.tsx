@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useResendVerification } from '@/features/auth/useResendVerification'
 import { useVerifyEmail } from '@/features/auth/useVerifyEmail'
-import { getPostLoginPath } from '@/lib/auth-redirect'
+import { useAxiosInstance } from '@/hooks/useAxiosInstance'
+import { resolvePostLoginPath } from '@/lib/auth-redirect'
 
 export function VerifyEmailPage() {
   const { t } = useTranslation()
@@ -16,6 +17,7 @@ export function VerifyEmailPage() {
   const initialEmail = (location.state as { email?: string })?.email ?? ''
   const verifyMutation = useVerifyEmail()
   const resendMutation = useResendVerification()
+  const axios = useAxiosInstance()
   const [email, setEmail] = useState(initialEmail)
   const [code, setCode] = useState('')
   const [message, setMessage] = useState('')
@@ -26,7 +28,8 @@ export function VerifyEmailPage() {
     setError('')
     try {
       const data = await verifyMutation.mutateAsync({ email, code })
-      navigate(getPostLoginPath(data.user))
+      const path = await resolvePostLoginPath(axios, data.user)
+      navigate(path)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
       setError(axiosErr.response?.data?.message ?? t('common.error'))

@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'OWNER' | 'CUSTOMER'
+export type UserRole = 'ADMIN' | 'OWNER' | 'CUSTOMER' | 'SERVICE_PROVIDER'
 
 export type ProfileStatus =
   | 'INCOMPLETE'
@@ -452,4 +452,156 @@ export interface OwnerProfile {
     isVerified?: boolean
     createdAt: string
   }
+}
+
+// ——— Service Provider ———
+
+export type ServiceProviderStatus =
+  | 'DRAFT'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'SUSPENDED'
+  | 'REJECTED'
+
+export type ServiceListingStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED'
+
+export type ServiceOrderStatus =
+  | 'PENDING'
+  | 'ACCEPTED'
+  | 'PREPARING'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'REJECTED'
+  | 'CANCELLED'
+
+export type ServiceLeadStatus =
+  | 'NEW'
+  | 'CONTACTED'
+  | 'QUOTED'
+  | 'COMPLETED'
+  | 'LOST'
+
+export interface ServiceCategory {
+  id: string
+  name: string
+  slug: string
+  description?: string | null
+  sortOrder?: number
+  commissionRate?: number
+  isActive?: boolean
+}
+
+export interface ServiceCoverageArea {
+  id: string
+  city: string
+  area: string | null
+  isActive: boolean
+}
+
+export interface ServiceProviderProfile {
+  id: string
+  userId: string
+  businessName: string
+  categoryId: string
+  description: string | null
+  logo: string | null
+  phone: string | null
+  whatsapp: string | null
+  nationalId: string | null
+  commercialRegister: string | null
+  status: ServiceProviderStatus
+  rejectionReason: string | null
+  suspensionReason: string | null
+  category: ServiceCategory
+  coverageAreas: ServiceCoverageArea[]
+  counts?: { listings: number; orders: number; leads: number }
+}
+
+export interface ServiceMenuItem {
+  name: string
+  price: number
+}
+
+export interface ServiceListing {
+  id: string
+  title: string
+  description: string | null
+  status: ServiceListingStatus
+  menuItems: ServiceMenuItem[]
+  metadata?: Record<string, unknown> | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface ServiceOrderCustomer {
+  id: string
+  name: string
+  email?: string | null
+  phone?: string | null
+}
+
+export interface ServiceOrder {
+  id: string
+  status: ServiceOrderStatus
+  subtotal: number
+  deliveryFee: number
+  platformFee: number
+  providerNet: number
+  deliveryCity: string
+  deliveryArea?: string | null
+  deliveryAddress?: string | null
+  notes?: string | null
+  rejectionReason?: string | null
+  items: Array<{ name: string; quantity: number; unitPrice: number }>
+  customer: ServiceOrderCustomer
+  listing?: { id: string; title: string } | null
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface ServiceLead {
+  id: string
+  status: ServiceLeadStatus
+  type: string
+  pickupCity: string
+  pickupArea?: string | null
+  destination: string
+  passengers?: number | null
+  preferredDateTime?: string | null
+  notes?: string | null
+  customer: ServiceOrderCustomer
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface ProviderDashboardSummary {
+  period: { from: string | null; to: string | null }
+  orders: {
+    total: number
+    delivered: number
+    acceptanceRate: number
+  }
+  leads: {
+    total: number
+    byStatus: Array<{ status: ServiceLeadStatus; count: number }>
+  }
+  revenue: {
+    totalSales: number
+    platformFee: number
+    providerNet: number
+  }
+  topDeliveryAreas: Array<{ area: string; orderCount: number }>
+}
+
+export interface AdminServiceProviderListItem {
+  userId: string
+  businessName: string
+  status: ServiceProviderStatus
+  category?: ServiceCategory | null
+  user?: { id: string; name: string; email: string | null; phone: string | null }
+  logo?: string | null
+  nationalId?: string | null
+  commercialRegister?: string | null
+  description?: string | null
+  createdAt?: string
 }

@@ -39,8 +39,24 @@ export function NotificationBootstrap() {
         }
       }
 
-      const unsub = await subscribeToForegroundMessages(() => {
+      const unsub = await subscribeToForegroundMessages((payload) => {
         void queryClient.invalidateQueries({ queryKey: ['notifications'] })
+
+        const type = payload.data?.type
+        if (type === 'SERVICE_ORDER_RECEIVED') {
+          void queryClient.invalidateQueries({ queryKey: ['provider', 'orders'] })
+          void queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] })
+        }
+        if (type === 'SERVICE_LEAD_RECEIVED') {
+          void queryClient.invalidateQueries({ queryKey: ['provider', 'leads'] })
+        }
+        if (
+          type === 'SERVICE_PROVIDER_APPROVED' ||
+          type === 'SERVICE_PROVIDER_REJECTED' ||
+          type === 'SERVICE_PROVIDER_SUSPENDED'
+        ) {
+          void queryClient.invalidateQueries({ queryKey: ['provider', 'profile'] })
+        }
       })
       if (!cancelled && typeof unsub === 'function') {
         unsubscribeForeground = unsub

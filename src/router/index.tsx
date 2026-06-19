@@ -9,7 +9,18 @@ import { AdminOwnerDetailPage } from '@/pages/admin/AdminOwnerDetailPage'
 import { AdminOwnerListDetailPage } from '@/pages/admin/AdminOwnerListDetailPage'
 import { AdminOwnersPage } from '@/pages/admin/AdminOwnersPage'
 import { AdminPropertiesPage } from '@/pages/admin/AdminPropertiesPage'
+import { ProviderCoveragePage } from '@/pages/provider/ProviderCoveragePage'
+import { ProviderDashboardPage } from '@/pages/provider/ProviderDashboardPage'
+import { ProviderLeadsPage } from '@/pages/provider/ProviderLeadsPage'
+import { ProviderListingsPage } from '@/pages/provider/ProviderListingsPage'
+import { ProviderOrdersPage } from '@/pages/provider/ProviderOrdersPage'
+import { ProviderPendingReviewPage } from '@/pages/provider/ProviderPendingReviewPage'
+import { ProviderProfilePage } from '@/pages/provider/ProviderProfilePage'
+import { ProviderSetupPage } from '@/pages/provider/ProviderSetupPage'
+import { ProviderSuspendedPage } from '@/pages/provider/ProviderSuspendedPage'
 import { PendingOwnersPage } from '@/pages/admin/PendingOwnersPage'
+import { PendingProvidersPage } from '@/pages/admin/PendingProvidersPage'
+import { AdminServiceCategoriesPage } from '@/pages/admin/AdminServiceCategoriesPage'
 import { PendingPropertiesPage } from '@/pages/admin/PendingPropertiesPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
@@ -78,8 +89,62 @@ export const router = createBrowserRouter([
             ],
           },
           {
+            element: <RoleGuard roles={['SERVICE_PROVIDER']} />,
+            children: [
+              { path: 'provider/pending-review', element: <ProviderPendingReviewPage /> },
+              { path: 'provider/suspended', element: <ProviderSuspendedPage /> },
+              {
+                element: <PermissionGuard permission="provider.profile.update" />,
+                children: [
+                  { path: 'provider/setup', element: <ProviderSetupPage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="provider.profile.read" />,
+                children: [{ path: 'provider/profile', element: <ProviderProfilePage /> }],
+              },
+              {
+                element: <PermissionGuard permission="provider.dashboard.read" />,
+                children: [
+                  { path: 'provider/dashboard', element: <ProviderDashboardPage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="provider.coverage.manage" />,
+                children: [{ path: 'provider/coverage', element: <ProviderCoveragePage /> }],
+              },
+              {
+                element: <PermissionGuard permission="provider.listing.manage" />,
+                children: [{ path: 'provider/listings', element: <ProviderListingsPage /> }],
+              },
+              {
+                element: <PermissionGuard permission="provider.order.read" />,
+                children: [{ path: 'provider/orders', element: <ProviderOrdersPage /> }],
+              },
+              {
+                element: <PermissionGuard permission="provider.lead.read" />,
+                children: [{ path: 'provider/leads', element: <ProviderLeadsPage /> }],
+              },
+            ],
+          },
+          {
             element: <RoleGuard roles={['ADMIN']} />,
             children: [
+              {
+                element: <PermissionGuard permission="provider.review" />,
+                children: [
+                  { path: 'admin/providers/pending', element: <PendingProvidersPage /> },
+                ],
+              },
+              {
+                element: <PermissionGuard permission="service.category.read" />,
+                children: [
+                  {
+                    path: 'admin/service-categories',
+                    element: <AdminServiceCategoriesPage />,
+                  },
+                ],
+              },
               {
                 element: <PermissionGuard permission="owner.review" />,
                 children: [

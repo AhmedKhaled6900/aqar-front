@@ -8,7 +8,7 @@ interface RegisterInput {
   email: string
   phone: string
   password: string
-  role: 'CUSTOMER' | 'OWNER'
+  role: 'CUSTOMER' | 'OWNER' | 'SERVICE_PROVIDER'
 }
 
 interface RegisterResponse {

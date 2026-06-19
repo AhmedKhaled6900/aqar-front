@@ -1,4 +1,4 @@
-import { Building2, ClipboardCheck, Plus, ShieldCheck } from 'lucide-react'
+import { Building2, ClipboardCheck, Package, Plus, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { BrandName } from '@/components/layout/BrandName'
@@ -10,7 +10,9 @@ import {
   usePendingOwners,
   usePendingProperties,
 } from '@/features/admin/useAdmin'
+import { usePendingProviders } from '@/features/admin/service-provider/useAdminProviders'
 import { useMe } from '@/features/auth/useMe'
+import { useProviderPendingOrdersCount } from '@/features/service-provider/useProviderOrders'
 import {
   useMyProperties,
   useProperties,
@@ -50,6 +52,18 @@ export function HomePage() {
                 </Link>
               </Button>
             )}
+            {role === 'SERVICE_PROVIDER' && (
+              <Button
+                asChild
+                variant="outline"
+                className="border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              >
+                <Link to="/provider/dashboard">
+                  <Package className="h-4 w-4" />
+                  {t('nav.providerDashboard')}
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
         <div className="pointer-events-none absolute -left-10 -top-10 size-40 rounded-full bg-white/10 blur-2xl" />
@@ -58,6 +72,7 @@ export function HomePage() {
 
       {role === 'ADMIN' && <AdminOverview />}
       {role === 'OWNER' && <OwnerOverview />}
+      {role === 'SERVICE_PROVIDER' && <ProviderOverview />}
 
       <LatestProperties />
     </div>
@@ -68,9 +83,10 @@ function AdminOverview() {
   const { t } = useTranslation()
   const { data: pendingOwners } = usePendingOwners()
   const { data: pendingProperties } = usePendingProperties()
+  const { data: pendingProviders } = usePendingProviders(1, 1)
 
   return (
-    <div className="stagger-children grid gap-4 sm:grid-cols-2">
+    <div className="stagger-children grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <StatCard
         to="/admin/owners/pending"
         icon={<ShieldCheck className="h-8 w-8 text-main" />}
@@ -78,11 +94,43 @@ function AdminOverview() {
         value={pendingOwners?.meta.total ?? 0}
       />
       <StatCard
+        to="/admin/providers/pending"
+        icon={<Package className="h-8 w-8 text-main" />}
+        label={t('admin.pendingProviders')}
+        value={pendingProviders?.meta.total ?? 0}
+      />
+      <StatCard
         to="/admin/properties/pending"
         icon={<ClipboardCheck className="h-8 w-8 text-accent" />}
         label={t('admin.pendingProperties')}
         value={pendingProperties?.length ?? 0}
       />
+    </div>
+  )
+}
+
+function ProviderOverview() {
+  const { t } = useTranslation()
+  const pendingOrders = useProviderPendingOrdersCount()
+
+  return (
+    <div className="stagger-children grid gap-4 sm:grid-cols-2">
+      <StatCard
+        to="/provider/orders"
+        icon={<Package className="h-8 w-8 text-main" />}
+        label={t('provider.orders')}
+        value={pendingOrders}
+      />
+      <Card className="hover-lift flex items-center justify-center border-border/80">
+        <CardContent className="p-6">
+          <Button asChild>
+            <Link to="/provider/listings">
+              <Plus className="h-4 w-4" />
+              {t('nav.providerListings')}
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }
