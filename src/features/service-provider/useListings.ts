@@ -3,12 +3,32 @@ import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { toastMeta } from '@/lib/mutation-meta'
 import type { ServiceListing, ServiceListingStatus, ServiceMenuItem } from '@/lib/types'
 
-export interface ListingInput {
+export interface CreateListingInput {
+  title: string
+  description: string
+  menuItems: ServiceMenuItem[]
+  metadata: Record<string, unknown>
+}
+
+export interface UpdateListingInput extends CreateListingInput {
+  status?: ServiceListingStatus
+}
+
+/** @deprecated use CreateListingInput / UpdateListingInput */
+export type ListingInput = UpdateListingInput
+
+export function buildCreateListingPayload(input: {
   title: string
   description?: string
-  menuItems?: ServiceMenuItem[]
+  menuItems: ServiceMenuItem[]
   metadata?: Record<string, unknown>
-  status?: ServiceListingStatus
+}): CreateListingInput {
+  return {
+    title: input.title,
+    description: input.description ?? '',
+    menuItems: input.menuItems,
+    metadata: input.metadata ?? {},
+  }
 }
 
 export function useProviderListings() {
@@ -29,7 +49,7 @@ export function useCreateListing() {
 
   return useMutation({
     meta: toastMeta.created(),
-    mutationFn: async (input: ListingInput) => {
+    mutationFn: async (input: CreateListingInput) => {
       const { data } = await axios.post<{
         message: string
         listing: ServiceListing
@@ -49,11 +69,16 @@ export function useUpdateListing() {
 
   return useMutation({
     meta: toastMeta.updated(),
-    mutationFn: async ({ id, ...input }: ListingInput & { id: string }) => {
+    mutationFn: async ({ id, ...input }: UpdateListingInput & { id: string }) => {
+      const { status, ...rest } = input
+      const payload = {
+        ...buildCreateListingPayload(rest),
+        ...(status !== undefined ? { status } : {}),
+      }
       const { data } = await axios.patch<{
         message: string
         listing: ServiceListing
-      }>(`/provider/listings/${id}`, input)
+      }>(`/provider/listings/${id}`, payload)
       return data
     },
     onSuccess: () => {

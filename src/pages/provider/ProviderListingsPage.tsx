@@ -10,19 +10,22 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
 import {
+  buildCreateListingPayload,
   useCreateListing,
   useDeleteListing,
   useProviderListings,
   useUpdateListing,
-  type ListingInput,
+  type UpdateListingInput,
 } from '@/features/service-provider/useListings'
 import { useConfirm } from '@/hooks/use-confirm'
 import type { ServiceListing, ServiceMenuItem } from '@/lib/types'
 
-const emptyForm: ListingInput & { menuItemsText: string } = {
+const emptyForm: UpdateListingInput & { menuItemsText: string } = {
   title: '',
   description: '',
   menuItemsText: '',
+  menuItems: [],
+  metadata: {},
   status: 'DRAFT',
 }
 
@@ -67,25 +70,28 @@ export function ProviderListingsPage() {
       title: listing.title,
       description: listing.description ?? '',
       menuItemsText: formatMenuItems(listing.menuItems ?? []),
+      menuItems: listing.menuItems ?? [],
+      metadata: listing.metadata ?? {},
       status: listing.status,
     })
     setFormOpen(true)
     setError('')
   }
 
-  const buildInput = (): ListingInput => ({
-    title: form.title,
-    description: form.description || undefined,
-    menuItems: parseMenuItems(form.menuItemsText),
-    status: form.status,
-  })
+  const buildInput = (): UpdateListingInput =>
+    buildCreateListingPayload({
+      title: form.title,
+      description: form.description,
+      menuItems: parseMenuItems(form.menuItemsText),
+      metadata: form.metadata,
+    })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     try {
       if (editing) {
-        await updateMutation.mutateAsync({ id: editing.id, ...buildInput() })
+        await updateMutation.mutateAsync({ id: editing.id, ...buildInput(), status: form.status })
       } else {
         await createMutation.mutateAsync(buildInput())
       }
@@ -111,9 +117,12 @@ export function ProviderListingsPage() {
     const nextStatus = listing.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
     await updateMutation.mutateAsync({
       id: listing.id,
-      title: listing.title,
-      description: listing.description ?? undefined,
-      menuItems: listing.menuItems,
+      ...buildCreateListingPayload({
+        title: listing.title,
+        description: listing.description ?? '',
+        menuItems: listing.menuItems ?? [],
+        metadata: listing.metadata ?? {},
+      }),
       status: nextStatus,
     })
   }
@@ -186,7 +195,7 @@ export function ProviderListingsPage() {
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        status: e.target.value as ListingInput['status'],
+                        status: e.target.value as UpdateListingInput['status'],
                       })
                     }
                   >
