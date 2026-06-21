@@ -493,9 +493,12 @@ export interface ServiceCategory {
 
 export interface ServiceCoverageArea {
   id: string
+  providerId?: string
   city: string
   area: string | null
   isActive: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface ServiceProviderProfile {
@@ -524,10 +527,12 @@ export interface ServiceMenuItem {
 
 export interface ServiceListing {
   id: string
+  providerId?: string
+  categoryId?: string
   title: string
   description: string | null
   status: ServiceListingStatus
-  menuItems: ServiceMenuItem[]
+  menuItems: ServiceMenuItem[] | null
   metadata?: Record<string, unknown> | null
   createdAt?: string
   updatedAt?: string
@@ -552,7 +557,13 @@ export interface ServiceOrder {
   deliveryAddress?: string | null
   notes?: string | null
   rejectionReason?: string | null
-  items: Array<{ name: string; quantity: number; unitPrice: number }>
+  items: Array<{
+    id?: string
+    name: string
+    quantity: number
+    unitPrice: number
+    notes?: string | null
+  }>
   customer: ServiceOrderCustomer
   listing?: { id: string; title: string } | null
   createdAt: string
@@ -593,6 +604,55 @@ export interface ProviderDashboardSummary {
   topDeliveryAreas: Array<{ area: string; orderCount: number }>
 }
 
+export interface AdminServiceProviderUser {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  isVerified: boolean
+  createdAt: string
+}
+
+export interface AdminProviderStats {
+  listingsCount: number
+  ordersCount: number
+  leadsCount: number
+  ordersByStatus: Record<string, number>
+  leadsByStatus: Record<string, number>
+  revenue: {
+    totalSales: number
+    platformFee: number
+    providerNet: number
+  }
+}
+
+export interface AdminServiceProviderRecord {
+  id: string
+  userId: string
+  businessName: string
+  description: string | null
+  logo: string | null
+  phone: string | null
+  whatsapp: string | null
+  nationalId: string | null
+  commercialRegister: string | null
+  status: ServiceProviderStatus
+  rejectionReason: string | null
+  suspensionReason: string | null
+  suspendedAt: string | null
+  createdAt: string
+  updatedAt: string
+  user: AdminServiceProviderUser
+  category: ServiceCategory
+  coverageAreas: ServiceCoverageArea[]
+  listings: ServiceListing[]
+  orders: ServiceOrder[]
+  leads: ServiceLead[]
+  promotions: unknown[]
+  stats: AdminProviderStats
+}
+
+/** @deprecated use AdminServiceProviderRecord for full list items */
 export interface AdminServiceProviderListItem {
   userId: string
   businessName: string

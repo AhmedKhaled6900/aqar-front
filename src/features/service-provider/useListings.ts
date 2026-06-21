@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { extractPaginatedItems } from '@/lib/api/pagination'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { toastMeta } from '@/lib/mutation-meta'
 import type { ServiceListing, ServiceListingStatus, ServiceMenuItem } from '@/lib/types'
@@ -37,8 +38,10 @@ export function useProviderListings() {
   return useQuery({
     queryKey: ['provider', 'listings'],
     queryFn: async () => {
-      const { data } = await axios.get<ServiceListing[]>('/provider/listings')
-      return data
+      const { data } = await axios.get<{ items: ServiceListing[] } | ServiceListing[]>(
+        '/provider/listings',
+      )
+      return extractPaginatedItems<ServiceListing>(data)
     },
   })
 }
@@ -59,6 +62,25 @@ export function useCreateListing() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['provider', 'listings'] })
       void queryClient.invalidateQueries({ queryKey: ['provider', 'profile'] })
+    },
+  })
+}
+
+export function useUpdateListingStatus() {
+  const axios = useAxiosInstance()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    meta: toastMeta.saved(),
+    mutationFn: async ({ id, status }: { id: string; status: ServiceListingStatus }) => {
+      const { data } = await axios.patch<{
+        message: string
+        listing: ServiceListing
+      }>(`/provider/listings/${id}`, { status })
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['provider', 'listings'] })
     },
   })
 }

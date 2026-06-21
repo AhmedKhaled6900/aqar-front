@@ -20,6 +20,8 @@ import { ProviderSetupPage } from '@/pages/provider/ProviderSetupPage'
 import { ProviderSuspendedPage } from '@/pages/provider/ProviderSuspendedPage'
 import { PendingOwnersPage } from '@/pages/admin/PendingOwnersPage'
 import { PendingProvidersPage } from '@/pages/admin/PendingProvidersPage'
+import { AdminProvidersPage } from '@/pages/admin/AdminProvidersPage'
+import { AdminProviderDetailPage } from '@/pages/admin/AdminProviderDetailPage'
 import { AdminServiceCategoriesPage } from '@/pages/admin/AdminServiceCategoriesPage'
 import { PendingPropertiesPage } from '@/pages/admin/PendingPropertiesPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
@@ -134,6 +136,11 @@ export const router = createBrowserRouter([
                 element: <PermissionGuard permission="provider.review" />,
                 children: [
                   { path: 'admin/providers/pending', element: <PendingProvidersPage /> },
+                  { path: 'admin/providers', element: <AdminProvidersPage /> },
+                  {
+                    path: 'admin/providers/:providerId',
+                    element: <AdminProviderDetailPage />,
+                  },
                 ],
               },
               {

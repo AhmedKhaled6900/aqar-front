@@ -15,34 +15,57 @@ import {
   useDeleteListing,
   useProviderListings,
   useUpdateListing,
+  useUpdateListingStatus,
   type UpdateListingInput,
 } from '@/features/service-provider/useListings'
 import { useConfirm } from '@/hooks/use-confirm'
-import type { ServiceListing, ServiceMenuItem } from '@/lib/types'
+import type { ServiceListing, ServiceListingStatus, ServiceMenuItem } from '@/lib/types'
 
-const emptyForm: UpdateListingInput & { menuItemsText: string } = {
+interface ListingFormState {
+  title: string
+  description: string
+  menuItems: ServiceMenuItem[]
+  metadata: Record<string, unknown>
+  status: ServiceListingStatus
+}
+
+const emptyMenuItem = (): ServiceMenuItem => ({ name: '', price: 0 })
+
+const emptyForm = (): ListingFormState => ({
   title: '',
   description: '',
-  menuItemsText: '',
-  menuItems: [],
+  menuItems: [emptyMenuItem()],
   metadata: {},
   status: 'DRAFT',
+})
+
+function listingStatusBadgeVariant(
+  status: ServiceListingStatus,
+): 'default' | 'secondary' | 'warning' {
+  if (status === 'ACTIVE') return 'default'
+  if (status === 'DRAFT') return 'warning'
+  return 'secondary'
 }
 
-function parseMenuItems(text: string): ServiceMenuItem[] {
-  return text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [name, priceStr] = line.split('|').map((s) => s.trim())
-      return { name, price: Number(priceStr) || 0 }
-    })
-    .filter((item) => item.name)
+function nextListingStatus(status: ServiceListingStatus): ServiceListingStatus {
+  return status === 'ACTIVE' ? 'DRAFT' : 'ACTIVE'
 }
 
-function formatMenuItems(items: ServiceMenuItem[]): string {
-  return items.map((item) => `${item.name} | ${item.price}`).join('\n')
+function listingStatusActionLabel(
+  status: ServiceListingStatus,
+  t: (key: string) => string,
+): string {
+  if (status === 'ACTIVE') return t('provider.unpublishListing')
+  return t('provider.publishListing')
+}
+
+function normalizeMenuItems(items: ServiceMenuItem[]): ServiceMenuItem[] {
+  return items
+    .map((item) => ({
+      name: item.name.trim(),
+      price: Number(item.price) || 0,
+    }))
+    .filter((item) => item.name.length > 0)
 }
 
 export function ProviderListingsPage() {
@@ -50,27 +73,28 @@ export function ProviderListingsPage() {
   const { data: listings = [], isLoading } = useProviderListings()
   const createMutation = useCreateListing()
   const updateMutation = useUpdateListing()
+  const statusMutation = useUpdateListingStatus()
   const deleteMutation = useDeleteListing()
   const { confirm, dialog } = useConfirm()
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<ServiceListing | null>(null)
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState<ListingFormState>(emptyForm())
   const [error, setError] = useState('')
 
   const openCreate = () => {
     setEditing(null)
-    setForm(emptyForm)
+    setForm(emptyForm())
     setFormOpen(true)
     setError('')
   }
 
   const openEdit = (listing: ServiceListing) => {
     setEditing(listing)
+    const items = listing.menuItems?.length ? listing.menuItems : [emptyMenuItem()]
     setForm({
       title: listing.title,
       description: listing.description ?? '',
-      menuItemsText: formatMenuItems(listing.menuItems ?? []),
-      menuItems: listing.menuItems ?? [],
+      menuItems: items,
       metadata: listing.metadata ?? {},
       status: listing.status,
     })
@@ -78,17 +102,48 @@ export function ProviderListingsPage() {
     setError('')
   }
 
+  const updateMenuItem = (index: number, patch: Partial<ServiceMenuItem>) => {
+    setForm((prev) => ({
+      ...prev,
+      menuItems: prev.menuItems.map((item, i) =>
+        i === index ? { ...item, ...patch } : item,
+      ),
+    }))
+  }
+
+  const addMenuItemRow = () => {
+    setForm((prev) => ({
+      ...prev,
+      menuItems: [...prev.menuItems, emptyMenuItem()],
+    }))
+  }
+
+  const removeMenuItemRow = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      menuItems:
+        prev.menuItems.length > 1
+          ? prev.menuItems.filter((_, i) => i !== index)
+          : [emptyMenuItem()],
+    }))
+  }
+
   const buildInput = (): UpdateListingInput =>
     buildCreateListingPayload({
       title: form.title,
       description: form.description,
-      menuItems: parseMenuItems(form.menuItemsText),
+      menuItems: normalizeMenuItems(form.menuItems),
       metadata: form.metadata,
     })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    const menuItems = normalizeMenuItems(form.menuItems)
+    if (!menuItems.length) {
+      setError(t('provider.menuItemsRequired'))
+      return
+    }
     try {
       if (editing) {
         await updateMutation.mutateAsync({ id: editing.id, ...buildInput(), status: form.status })
@@ -96,7 +151,7 @@ export function ProviderListingsPage() {
         await createMutation.mutateAsync(buildInput())
       }
       setFormOpen(false)
-      setForm(emptyForm)
+      setForm(emptyForm())
       setEditing(null)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
@@ -113,17 +168,10 @@ export function ProviderListingsPage() {
     })
   }
 
-  const toggleActive = async (listing: ServiceListing) => {
-    const nextStatus = listing.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE'
-    await updateMutation.mutateAsync({
+  const toggleListingStatus = async (listing: ServiceListing) => {
+    await statusMutation.mutateAsync({
       id: listing.id,
-      ...buildCreateListingPayload({
-        title: listing.title,
-        description: listing.description ?? '',
-        menuItems: listing.menuItems ?? [],
-        metadata: listing.metadata ?? {},
-      }),
-      status: nextStatus,
+      status: nextListingStatus(listing.status),
     })
   }
 
@@ -175,16 +223,59 @@ export function ProviderListingsPage() {
                   rows={2}
                 />
               </div>
-              <div>
+              <div className="space-y-3">
                 <Label>{t('provider.menuItems')}</Label>
-                <Textarea
-                  className="mt-1 font-mono text-sm"
-                  dir="ltr"
-                  value={form.menuItemsText}
-                  onChange={(e) => setForm({ ...form, menuItemsText: e.target.value })}
-                  placeholder={t('provider.menuItemsPlaceholder')}
-                  rows={4}
-                />
+                {form.menuItems.map((item, index) => (
+                  <div key={index} className="flex flex-wrap items-end gap-2">
+                    <div className="min-w-[140px] flex-1">
+                      {index === 0 && (
+                        <span className="mb-1 block text-xs text-muted-foreground">
+                          {t('provider.menuItemName')}
+                        </span>
+                      )}
+                      <Input
+                        value={item.name}
+                        onChange={(e) => updateMenuItem(index, { name: e.target.value })}
+                        placeholder={t('provider.menuItemName')}
+                        required={index === 0}
+                      />
+                    </div>
+                    <div className="w-32">
+                      {index === 0 && (
+                        <span className="mb-1 block text-xs text-muted-foreground">
+                          {t('provider.menuItemPrice')}
+                        </span>
+                      )}
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        dir="ltr"
+                        value={item.price || ''}
+                        onChange={(e) =>
+                          updateMenuItem(index, { price: Number(e.target.value) || 0 })
+                        }
+                        placeholder="0"
+                        required={index === 0}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      disabled={form.menuItems.length === 1 && !item.name && !item.price}
+                      onClick={() => removeMenuItemRow(index)}
+                      aria-label={t('provider.removeMenuItem')}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={addMenuItemRow}>
+                  <Plus className="h-4 w-4" />
+                  {t('provider.addMenuItem')}
+                </Button>
               </div>
               {editing && (
                 <div>
@@ -195,7 +286,7 @@ export function ProviderListingsPage() {
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        status: e.target.value as UpdateListingInput['status'],
+                        status: e.target.value as ListingFormState['status'],
                       })
                     }
                   >
@@ -226,14 +317,14 @@ export function ProviderListingsPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold">{listing.title}</h3>
-                    <Badge variant={listing.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                    <Badge variant={listingStatusBadgeVariant(listing.status)}>
                       {t(`provider.listingStatus.${listing.status}`)}
                     </Badge>
                   </div>
                   {listing.description && (
                     <p className="mt-1 text-sm text-muted-foreground">{listing.description}</p>
                   )}
-                  {listing.menuItems?.length > 0 && (
+                  {listing.menuItems && listing.menuItems.length > 0 && (
                     <ul className="mt-2 text-sm">
                       {listing.menuItems.map((item, i) => (
                         <li key={i}>
@@ -248,18 +339,14 @@ export function ProviderListingsPage() {
                     <Pencil className="h-4 w-4" />
                     {t('common.edit')}
                   </Button>
-                  {listing.status !== 'DRAFT' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={updateMutation.isPending}
-                      onClick={() => toggleActive(listing)}
-                    >
-                      {listing.status === 'ACTIVE'
-                        ? t('provider.pauseListing')
-                        : t('provider.publishListing')}
-                    </Button>
-                  )}
+                  <Button
+                    variant={listing.status === 'ACTIVE' ? 'outline' : 'default'}
+                    size="sm"
+                    disabled={statusMutation.isPending}
+                    onClick={() => toggleListingStatus(listing)}
+                  >
+                    {listingStatusActionLabel(listing.status, t)}
+                  </Button>
                   <Button
                     variant="destructive"
                     size="sm"

@@ -4,9 +4,11 @@ import { normalizePaginatedResponse } from '@/lib/api/pagination'
 import { toastMeta } from '@/lib/mutation-meta'
 import type {
   AdminServiceProviderListItem,
+  AdminServiceProviderRecord,
   PaginatedResponse,
   ServiceCategory,
   ServiceProviderProfile,
+  ServiceProviderStatus,
 } from '@/lib/types'
 
 export function usePendingProviders(page = 1, limit = 10) {
@@ -20,6 +22,45 @@ export function usePendingProviders(page = 1, limit = 10) {
       >('/admin/providers/pending', { params: { page, limit } })
       return normalizePaginatedResponse<AdminServiceProviderListItem>(data)
     },
+  })
+}
+
+export interface AdminProvidersFilters {
+  status?: ServiceProviderStatus
+  categoryId?: string
+}
+
+export function useAdminProviders(
+  page = 1,
+  limit = 20,
+  filters: AdminProvidersFilters = {},
+) {
+  const axios = useAxiosInstance()
+
+  return useQuery({
+    queryKey: ['admin', 'providers', page, limit, filters],
+    queryFn: async () => {
+      const { data } = await axios.get<PaginatedResponse<AdminServiceProviderRecord>>(
+        '/admin/providers',
+        { params: { page, limit, ...filters } },
+      )
+      return normalizePaginatedResponse<AdminServiceProviderRecord>(data)
+    },
+  })
+}
+
+export function useAdminProviderDetail(providerId: string) {
+  const axios = useAxiosInstance()
+
+  return useQuery({
+    queryKey: ['admin', 'providers', providerId],
+    queryFn: async () => {
+      const { data } = await axios.get<AdminServiceProviderRecord>(
+        `/admin/providers/${providerId}`,
+      )
+      return data
+    },
+    enabled: !!providerId,
   })
 }
 

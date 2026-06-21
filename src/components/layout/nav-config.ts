@@ -131,9 +131,15 @@ export const navSections: NavSection[] = [
         permission: 'owner.review',
       },
       {
+        to: '/admin/providers',
+        labelKey: 'nav.adminAllProviders',
+        icon: Store,
+        permission: 'provider.review',
+      },
+      {
         to: '/admin/providers/pending',
         labelKey: 'nav.adminProviders',
-        icon: Store,
+        icon: ShieldCheck,
         permission: 'provider.review',
       },
       {

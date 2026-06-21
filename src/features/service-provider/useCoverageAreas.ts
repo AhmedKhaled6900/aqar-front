@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { extractPaginatedItems } from '@/lib/api/pagination'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { toastMeta } from '@/lib/mutation-meta'
 import type { ServiceCoverageArea } from '@/lib/types'
@@ -9,10 +10,10 @@ export function useCoverageAreas() {
   return useQuery({
     queryKey: ['provider', 'coverage-areas'],
     queryFn: async () => {
-      const { data } = await axios.get<ServiceCoverageArea[]>(
-        '/provider/coverage-areas',
-      )
-      return data
+      const { data } = await axios.get<
+        { items: ServiceCoverageArea[] } | ServiceCoverageArea[]
+      >('/provider/coverage-areas')
+      return extractPaginatedItems<ServiceCoverageArea>(data)
     },
   })
 }
