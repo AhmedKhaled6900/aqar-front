@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
-import { normalizePaginatedResponse } from '@/lib/api/pagination'
+import { extractPaginatedItems, normalizePaginatedResponse } from '@/lib/api/pagination'
 import { toastMeta } from '@/lib/mutation-meta'
 import type {
   AdminServiceProviderListItem,
@@ -127,10 +127,10 @@ export function useAdminServiceCategories() {
   return useQuery({
     queryKey: ['admin', 'service-categories'],
     queryFn: async () => {
-      const { data } = await axios.get<ServiceCategory[]>(
+      const { data } = await axios.get<{ items: ServiceCategory[] } | ServiceCategory[]>(
         '/admin/service-categories',
       )
-      return data
+      return extractPaginatedItems<ServiceCategory>(data)
     },
   })
 }
