@@ -130,6 +130,7 @@ NEW → CONTACTED → QUOTED → COMPLETED
 provider.profile.read
 provider.profile.update
 provider.coverage.manage
+provider.menu.manage
 provider.listing.manage
 provider.order.read
 provider.order.manage

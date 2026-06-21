@@ -1,5 +1,6 @@
 import {
   Building2,
+  ChefHat,
   ClipboardCheck,
   ClipboardList,
   FolderTree,
@@ -92,6 +93,11 @@ export const navSections: NavSection[] = [
         labelKey: 'nav.providerCoverage',
         icon: MapPin,
         permission: 'provider.coverage.manage',
+      },
+      {
+        to: '/provider/menu-items',
+        labelKey: 'nav.providerMenu',
+        icon: ChefHat,
       },
       {
         to: '/provider/listings',

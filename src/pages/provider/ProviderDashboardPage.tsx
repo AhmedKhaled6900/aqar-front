@@ -1,4 +1,4 @@
-import { Package, TrendingUp, Users, Wallet } from 'lucide-react'
+import { ChefHat, Package, TrendingUp, Users, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
@@ -106,6 +106,12 @@ export function ProviderDashboardPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        <Button asChild>
+          <Link to="/provider/menu-items">
+            <ChefHat className="h-4 w-4" />
+            {t('provider.menuTitle')}
+          </Link>
+        </Button>
         <Button asChild variant="outline">
           <Link to="/provider/orders">{t('provider.orders')}</Link>
         </Button>

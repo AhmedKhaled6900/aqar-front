@@ -1,6 +1,7 @@
 import { List, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,22 +20,20 @@ import {
   type UpdateListingInput,
 } from '@/features/service-provider/useListings'
 import { useConfirm } from '@/hooks/use-confirm'
-import type { ServiceListing, ServiceListingStatus, ServiceMenuItem } from '@/lib/types'
+import type { ServiceListing, ServiceListingStatus } from '@/lib/types'
 
 interface ListingFormState {
   title: string
   description: string
-  menuItems: ServiceMenuItem[]
+  deliveryFee: string
   metadata: Record<string, unknown>
   status: ServiceListingStatus
 }
 
-const emptyMenuItem = (): ServiceMenuItem => ({ name: '', price: 0 })
-
 const emptyForm = (): ListingFormState => ({
   title: '',
   description: '',
-  menuItems: [emptyMenuItem()],
+  deliveryFee: '',
   metadata: {},
   status: 'DRAFT',
 })
@@ -59,15 +58,6 @@ function listingStatusActionLabel(
   return t('provider.publishListing')
 }
 
-function normalizeMenuItems(items: ServiceMenuItem[]): ServiceMenuItem[] {
-  return items
-    .map((item) => ({
-      name: item.name.trim(),
-      price: Number(item.price) || 0,
-    }))
-    .filter((item) => item.name.length > 0)
-}
-
 export function ProviderListingsPage() {
   const { t } = useTranslation()
   const { data: listings = [], isLoading } = useProviderListings()
@@ -90,11 +80,11 @@ export function ProviderListingsPage() {
 
   const openEdit = (listing: ServiceListing) => {
     setEditing(listing)
-    const items = listing.menuItems?.length ? listing.menuItems : [emptyMenuItem()]
     setForm({
       title: listing.title,
       description: listing.description ?? '',
-      menuItems: items,
+      deliveryFee:
+        listing.deliveryFee != null ? String(listing.deliveryFee) : '',
       metadata: listing.metadata ?? {},
       status: listing.status,
     })
@@ -102,46 +92,21 @@ export function ProviderListingsPage() {
     setError('')
   }
 
-  const updateMenuItem = (index: number, patch: Partial<ServiceMenuItem>) => {
-    setForm((prev) => ({
-      ...prev,
-      menuItems: prev.menuItems.map((item, i) =>
-        i === index ? { ...item, ...patch } : item,
-      ),
-    }))
-  }
-
-  const addMenuItemRow = () => {
-    setForm((prev) => ({
-      ...prev,
-      menuItems: [...prev.menuItems, emptyMenuItem()],
-    }))
-  }
-
-  const removeMenuItemRow = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      menuItems:
-        prev.menuItems.length > 1
-          ? prev.menuItems.filter((_, i) => i !== index)
-          : [emptyMenuItem()],
-    }))
-  }
-
   const buildInput = (): UpdateListingInput =>
     buildCreateListingPayload({
       title: form.title,
       description: form.description,
-      menuItems: normalizeMenuItems(form.menuItems),
+      deliveryFee: form.deliveryFee === '' ? 0 : Number(form.deliveryFee),
       metadata: form.metadata,
     })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    const menuItems = normalizeMenuItems(form.menuItems)
-    if (!menuItems.length) {
-      setError(t('provider.menuItemsRequired'))
+    const fee =
+      form.deliveryFee === '' ? undefined : Number(form.deliveryFee)
+    if (fee !== undefined && (Number.isNaN(fee) || fee < 0)) {
+      setError(t('common.error'))
       return
     }
     try {
@@ -193,6 +158,12 @@ export function ProviderListingsPage() {
             {t('provider.listings')}
           </h1>
           <p className="text-sm text-muted-foreground">{t('provider.listingsDesc')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t('provider.listingsMenuHint')}{' '}
+            <Link to="/provider/menu-items" className="text-main underline">
+              {t('provider.menuTitle')}
+            </Link>
+          </p>
         </div>
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
@@ -223,59 +194,21 @@ export function ProviderListingsPage() {
                   rows={2}
                 />
               </div>
-              <div className="space-y-3">
-                <Label>{t('provider.menuItems')}</Label>
-                {form.menuItems.map((item, index) => (
-                  <div key={index} className="flex flex-wrap items-end gap-2">
-                    <div className="min-w-[140px] flex-1">
-                      {index === 0 && (
-                        <span className="mb-1 block text-xs text-muted-foreground">
-                          {t('provider.menuItemName')}
-                        </span>
-                      )}
-                      <Input
-                        value={item.name}
-                        onChange={(e) => updateMenuItem(index, { name: e.target.value })}
-                        placeholder={t('provider.menuItemName')}
-                        required={index === 0}
-                      />
-                    </div>
-                    <div className="w-32">
-                      {index === 0 && (
-                        <span className="mb-1 block text-xs text-muted-foreground">
-                          {t('provider.menuItemPrice')}
-                        </span>
-                      )}
-                      <Input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        dir="ltr"
-                        value={item.price || ''}
-                        onChange={(e) =>
-                          updateMenuItem(index, { price: Number(e.target.value) || 0 })
-                        }
-                        placeholder="0"
-                        required={index === 0}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0"
-                      disabled={form.menuItems.length === 1 && !item.name && !item.price}
-                      onClick={() => removeMenuItemRow(index)}
-                      aria-label={t('provider.removeMenuItem')}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" size="sm" onClick={addMenuItemRow}>
-                  <Plus className="h-4 w-4" />
-                  {t('provider.addMenuItem')}
-                </Button>
+              <div>
+                <Label>{t('provider.listingDeliveryFee')}</Label>
+                <p className="text-sm text-muted-foreground">
+                  {t('provider.listingDeliveryFeeDesc')}
+                </p>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  dir="ltr"
+                  className="mt-1 max-w-xs"
+                  value={form.deliveryFee}
+                  onChange={(e) => setForm({ ...form, deliveryFee: e.target.value })}
+                  placeholder="0"
+                />
               </div>
               {editing && (
                 <div>
@@ -324,14 +257,11 @@ export function ProviderListingsPage() {
                   {listing.description && (
                     <p className="mt-1 text-sm text-muted-foreground">{listing.description}</p>
                   )}
-                  {listing.menuItems && listing.menuItems.length > 0 && (
-                    <ul className="mt-2 text-sm">
-                      {listing.menuItems.map((item, i) => (
-                        <li key={i}>
-                          {item.name} — {item.price.toLocaleString('ar-EG')} ج.م
-                        </li>
-                      ))}
-                    </ul>
+                  {listing.deliveryFee != null && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {t('provider.deliveryFee')}:{' '}
+                      {listing.deliveryFee.toLocaleString('ar-EG')} ج.م
+                    </p>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">

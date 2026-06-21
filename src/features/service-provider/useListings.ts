@@ -2,12 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { extractPaginatedItems } from '@/lib/api/pagination'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { toastMeta } from '@/lib/mutation-meta'
-import type { ServiceListing, ServiceListingStatus, ServiceMenuItem } from '@/lib/types'
+import type { ServiceListing, ServiceListingStatus } from '@/lib/types'
 
 export interface CreateListingInput {
   title: string
   description: string
-  menuItems: ServiceMenuItem[]
+  deliveryFee?: number
   metadata: Record<string, unknown>
 }
 
@@ -21,13 +21,13 @@ export type ListingInput = UpdateListingInput
 export function buildCreateListingPayload(input: {
   title: string
   description?: string
-  menuItems: ServiceMenuItem[]
+  deliveryFee?: number
   metadata?: Record<string, unknown>
 }): CreateListingInput {
   return {
     title: input.title,
     description: input.description ?? '',
-    menuItems: input.menuItems,
+    deliveryFee: input.deliveryFee ?? 0,
     metadata: input.metadata ?? {},
   }
 }

@@ -515,6 +515,8 @@ export interface ServiceProviderProfile {
   status: ServiceProviderStatus
   rejectionReason: string | null
   suspensionReason: string | null
+  /** سعر توصيل ثابت لمنيو المقدم — يُضبط عبر PATCH /provider/profile */
+  menuDeliveryFee?: number | null
   category: ServiceCategory
   coverageAreas: ServiceCoverageArea[]
   counts?: { listings: number; orders: number; leads: number }
@@ -525,6 +527,18 @@ export interface ServiceMenuItem {
   price: number
 }
 
+/** منيو ثابت للمقدم — CRUD عبر /provider/menu-items */
+export interface ProviderMenuItem {
+  id: string
+  name: string
+  price: number
+  prepTimeMinutes?: number | null
+  isActive: boolean
+  sortOrder: number
+  createdAt?: string
+  updatedAt?: string
+}
+
 export interface ServiceListing {
   id: string
   providerId?: string
@@ -533,6 +547,8 @@ export interface ServiceListing {
   description: string | null
   status: ServiceListingStatus
   menuItems: ServiceMenuItem[] | null
+  /** سعر توصيل خاص بهذا الإعلان */
+  deliveryFee?: number | null
   metadata?: Record<string, unknown> | null
   createdAt?: string
   updatedAt?: string

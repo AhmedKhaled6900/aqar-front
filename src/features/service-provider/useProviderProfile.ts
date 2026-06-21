@@ -11,7 +11,9 @@ export interface CreateProviderProfileInput {
   whatsapp?: string
 }
 
-export interface UpdateProviderProfileInput extends Partial<CreateProviderProfileInput> {}
+export interface UpdateProviderProfileInput extends Partial<CreateProviderProfileInput> {
+  menuDeliveryFee?: number
+}
 
 export interface SubmitProviderProfileInput {
   logo?: File

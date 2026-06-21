@@ -12,6 +12,7 @@ import { AdminPropertiesPage } from '@/pages/admin/AdminPropertiesPage'
 import { ProviderCoveragePage } from '@/pages/provider/ProviderCoveragePage'
 import { ProviderDashboardPage } from '@/pages/provider/ProviderDashboardPage'
 import { ProviderLeadsPage } from '@/pages/provider/ProviderLeadsPage'
+import { ProviderMenuItemsPage } from '@/pages/provider/ProviderMenuItemsPage'
 import { ProviderListingsPage } from '@/pages/provider/ProviderListingsPage'
 import { ProviderOrdersPage } from '@/pages/provider/ProviderOrdersPage'
 import { ProviderPendingReviewPage } from '@/pages/provider/ProviderPendingReviewPage'
@@ -115,6 +116,7 @@ export const router = createBrowserRouter([
                 element: <PermissionGuard permission="provider.coverage.manage" />,
                 children: [{ path: 'provider/coverage', element: <ProviderCoveragePage /> }],
               },
+              { path: 'provider/menu-items', element: <ProviderMenuItemsPage /> },
               {
                 element: <PermissionGuard permission="provider.listing.manage" />,
                 children: [{ path: 'provider/listings', element: <ProviderListingsPage /> }],
