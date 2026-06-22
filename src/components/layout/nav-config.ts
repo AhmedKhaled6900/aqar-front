@@ -12,6 +12,7 @@ import {
   ListChecks,
   List,
   MapPin,
+  Megaphone,
   Package,
   Plus,
   ShieldCheck,
@@ -146,6 +147,18 @@ export const navSections: NavSection[] = [
         to: '/admin/providers/pending',
         labelKey: 'nav.adminProviders',
         icon: ShieldCheck,
+        permission: 'provider.review',
+      },
+      {
+        to: '/admin/listings/pending',
+        labelKey: 'nav.adminListingsPending',
+        icon: Megaphone,
+        permission: 'provider.review',
+      },
+      {
+        to: '/admin/listings',
+        labelKey: 'nav.adminAllListings',
+        icon: List,
         permission: 'provider.review',
       },
       {

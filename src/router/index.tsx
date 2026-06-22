@@ -23,6 +23,9 @@ import { PendingOwnersPage } from '@/pages/admin/PendingOwnersPage'
 import { PendingProvidersPage } from '@/pages/admin/PendingProvidersPage'
 import { AdminProvidersPage } from '@/pages/admin/AdminProvidersPage'
 import { AdminProviderDetailPage } from '@/pages/admin/AdminProviderDetailPage'
+import { AdminListingDetailPage } from '@/pages/admin/AdminListingDetailPage'
+import { AdminListingsPage } from '@/pages/admin/AdminListingsPage'
+import { PendingListingsPage } from '@/pages/admin/PendingListingsPage'
 import { AdminServiceCategoriesPage } from '@/pages/admin/AdminServiceCategoriesPage'
 import { PendingPropertiesPage } from '@/pages/admin/PendingPropertiesPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
@@ -143,6 +146,9 @@ export const router = createBrowserRouter([
                     path: 'admin/providers/:providerId',
                     element: <AdminProviderDetailPage />,
                   },
+                  { path: 'admin/listings/pending', element: <PendingListingsPage /> },
+                  { path: 'admin/listings', element: <AdminListingsPage /> },
+                  { path: 'admin/listings/:listingId', element: <AdminListingDetailPage /> },
                 ],
               },
               {

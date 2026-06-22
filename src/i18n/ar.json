@@ -44,6 +44,8 @@
     "providerLeads": "طلبات النقل",
     "adminProviders": "مراجعة مقدمي الخدمة",
     "adminAllProviders": "جميع مقدمي الخدمة",
+    "adminListingsPending": "مراجعة الإعلانات",
+    "adminAllListings": "جميع الإعلانات",
     "adminServiceCategories": "فئات الخدمات"
   },
   "notFound": {
@@ -246,7 +248,8 @@
     "coverage": "مناطق التغطية",
     "coverageDesc": "حدد المدن والمناطق التي تغطيها خدمتك",
     "listings": "الإعلانات والمنيو",
-    "listingsDesc": "أنشئ إعلاناً مجانياً لعرض خدماتك",
+    "listingsDesc": "أنشئ إعلاناً لعرض خدماتك — يبدأ كمسودة ثم يُرسل للمراجعة",
+    "listingsReviewHint": "بعد الإنشاء، أرسل الإعلان للمراجعة. لا يمكن نشره مباشرة — يحتاج موافقة الإدارة.",
     "listingsMenuHint": "لإدارة منيو المقدم الثابت (طلبات مباشرة بدون إعلان)، انتقل إلى",
     "listingMenu": "منيو الإعلان",
     "listingMenuDesc": "أصناف خاصة بهذا الإعلان — عند الطلب عبر الإعلان يُستخدم هذا المنيو إن وُجد",
@@ -315,6 +318,9 @@
     "activate": "تفعيل",
     "deactivate": "إيقاف",
     "pauseListing": "إيقاف مؤقت",
+    "resumeListing": "استئناف الإعلان",
+    "submitListingForReview": "إرسال للمراجعة",
+    "listingPendingReview": "الإعلان قيد مراجعة الإدارة",
     "publishListing": "نشر الإعلان",
     "unpublishListing": "إرجاع لمسودة",
     "subtotal": "المجموع الفرعي",
@@ -325,7 +331,9 @@
     "markLost": "تسجيل كخسارة",
     "listingStatus": {
       "DRAFT": "مسودة",
+      "PENDING_REVIEW": "قيد المراجعة",
       "ACTIVE": "نشط",
+      "REJECTED": "مرفوض",
       "PAUSED": "موقوف"
     },
     "orderStatus": {
@@ -367,6 +375,14 @@
   "admin": {
     "pendingOwners": "ملاك بانتظار المراجعة",
     "pendingProviders": "مقدمو خدمة بانتظار المراجعة",
+    "pendingListings": "إعلانات بانتظار المراجعة",
+    "allListings": "جميع الإعلانات",
+    "allListingsDesc": "قائمة بكل إعلانات مقدمي الخدمة",
+    "listingDetails": "تفاصيل الإعلان",
+    "listingFeatured": "مميز في البانر",
+    "featureListing": "إضافة للبانر",
+    "unfeatureListing": "إزالة من البانر",
+    "featuredOnly": "المميزة فقط",
     "allProviders": "جميع مقدمي الخدمة",
     "allProvidersDesc": "قائمة بكل مقدمي الخدمة المسجلين",
     "providerDetails": "تفاصيل مقدم الخدمة",

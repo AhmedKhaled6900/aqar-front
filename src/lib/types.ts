@@ -463,7 +463,12 @@ export type ServiceProviderStatus =
   | 'SUSPENDED'
   | 'REJECTED'
 
-export type ServiceListingStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED'
+export type ServiceListingStatus =
+  | 'DRAFT'
+  | 'PENDING_REVIEW'
+  | 'ACTIVE'
+  | 'REJECTED'
+  | 'PAUSED'
 
 export type ServiceOrderStatus =
   | 'PENDING'
@@ -557,6 +562,8 @@ export interface ServiceListing {
   status: ServiceListingStatus
   image?: string | null
   link?: string | null
+  isFeatured?: boolean
+  rejectionReason?: string | null
   menuItems: ListingMenuItem[] | null
   /** سعر توصيل خاص بهذا الإعلان */
   deliveryFee?: number | null
@@ -571,6 +578,22 @@ export interface ListingOrderStats {
   completed: number
   active: number
   closed: number
+}
+
+export interface AdminServiceListingRecord extends ServiceListing {
+  provider?: {
+    id: string
+    businessName: string
+    logo?: string | null
+    status?: ServiceProviderStatus
+    category?: ServiceCategory
+    user?: {
+      id?: string
+      name?: string
+      email?: string | null
+      phone?: string | null
+    }
+  }
 }
 
 export interface ServiceOrderCustomer {

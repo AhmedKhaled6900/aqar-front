@@ -1,4 +1,4 @@
-import { ExternalLink, List, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ExternalLink, List, Megaphone, Pencil, Plus, Send, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -15,6 +15,7 @@ import {
   useCreateListing,
   useDeleteListing,
   useProviderListings,
+  useSubmitListing,
   useUpdateListing,
   useUpdateListingStatus,
   type CreateListingInput,
@@ -39,7 +40,6 @@ interface ListingFormState {
   deliveryFee: string
   link: string
   metadata: Record<string, unknown>
-  status: ServiceListingStatus
 }
 
 const emptyMenuRow = (): ListingMenuItemFormRow => ({
@@ -54,39 +54,39 @@ const emptyForm = (): ListingFormState => ({
   deliveryFee: '',
   link: '',
   metadata: {},
-  status: 'DRAFT',
 })
 
 function listingStatusBadgeVariant(
   status: ServiceListingStatus,
-): 'default' | 'secondary' | 'warning' {
-  if (status === 'ACTIVE') return 'default'
+): 'default' | 'secondary' | 'warning' | 'destructive' | 'success' {
+  if (status === 'ACTIVE') return 'success'
   if (status === 'DRAFT') return 'warning'
+  if (status === 'PENDING_REVIEW') return 'warning'
+  if (status === 'REJECTED') return 'destructive'
   return 'secondary'
 }
 
-function nextListingStatus(status: ServiceListingStatus): ServiceListingStatus {
-  return status === 'ACTIVE' ? 'DRAFT' : 'ACTIVE'
+function canEditListing(status: ServiceListingStatus) {
+  return status === 'DRAFT' || status === 'REJECTED' || status === 'ACTIVE' || status === 'PAUSED'
 }
 
-function listingStatusActionLabel(
-  status: ServiceListingStatus,
-  t: (key: string) => string,
-): string {
-  if (status === 'ACTIVE') return t('provider.unpublishListing')
-  return t('provider.publishListing')
+function canSubmitListing(status: ServiceListingStatus) {
+  return status === 'DRAFT' || status === 'REJECTED'
+}
+
+function canPauseListing(status: ServiceListingStatus) {
+  return status === 'ACTIVE' || status === 'PAUSED'
 }
 
 function buildMenuItemsPayload(rows: ListingMenuItemFormRow[]): ListingMenuItemInput[] {
   return rows
     .filter((row) => row.name.trim())
-    .map((row) => ({
+    .map((row, index) => ({
       ...(row.id ? { id: row.id } : {}),
       name: row.name.trim(),
       price: Number(row.price) || 0,
-      ...(row.prepTimeMinutes && Number(row.prepTimeMinutes) > 0
-        ? { prepTimeMinutes: Number(row.prepTimeMinutes) }
-        : {}),
+      prepTimeMinutes: row.prepTimeMinutes ? Number(row.prepTimeMinutes) : 0,
+      sortOrder: index,
     }))
 }
 
@@ -115,6 +115,7 @@ export function ProviderListingsPage() {
   const { data: orderStatsMap } = useProviderOrderStatsByListing()
   const createMutation = useCreateListing()
   const updateMutation = useUpdateListing()
+  const submitMutation = useSubmitListing()
   const statusMutation = useUpdateListingStatus()
   const deleteMutation = useDeleteListing()
   const { confirm, dialog } = useConfirm()
@@ -140,6 +141,7 @@ export function ProviderListingsPage() {
   }
 
   const openEdit = (listing: ServiceListing) => {
+    if (!canEditListing(listing.status)) return
     setEditing(listing)
     setImage(null)
     setMenuRows(menuRowsFromListing(listing))
@@ -149,7 +151,6 @@ export function ProviderListingsPage() {
       deliveryFee: listing.deliveryFee != null ? String(listing.deliveryFee) : '',
       link: listing.link ?? '',
       metadata: listing.metadata ?? {},
-      status: listing.status,
     })
     setFormOpen(true)
     setError('')
@@ -157,9 +158,12 @@ export function ProviderListingsPage() {
 
   const buildCreateInput = (): CreateListingInput => {
     const menuItems = buildMenuItemsPayload(menuRows)
+    if (!(image instanceof File)) {
+      throw new Error('Listing image must be a File')
+    }
     return {
       title: form.title,
-      image: image!,
+      image,
       description: form.description || undefined,
       deliveryFee: form.deliveryFee === '' ? undefined : Number(form.deliveryFee),
       link: form.link || undefined,
@@ -175,7 +179,6 @@ export function ProviderListingsPage() {
     deliveryFee: form.deliveryFee === '' ? undefined : Number(form.deliveryFee),
     link: form.link || undefined,
     metadata: form.metadata,
-    status: form.status,
     menuItems: buildMenuItemsPayload(menuRows),
   })
 
@@ -239,10 +242,14 @@ export function ProviderListingsPage() {
     })
   }
 
-  const toggleListingStatus = async (listing: ServiceListing) => {
+  const handleSubmitForReview = async (listing: ServiceListing) => {
+    await submitMutation.mutateAsync(listing.id)
+  }
+
+  const togglePause = async (listing: ServiceListing) => {
     await statusMutation.mutateAsync({
       id: listing.id,
-      status: nextListingStatus(listing.status),
+      status: listing.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE',
     })
   }
 
@@ -264,6 +271,7 @@ export function ProviderListingsPage() {
             {t('provider.listings')}
           </h1>
           <p className="text-sm text-muted-foreground">{t('provider.listingsDesc')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('provider.listingsReviewHint')}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {t('provider.listingsMenuHint')}{' '}
             <Link to="/provider/menu-items" className="text-main underline">
@@ -422,25 +430,6 @@ export function ProviderListingsPage() {
                 )}
               </div>
 
-              {editing && (
-                <div>
-                  <Label>{t('common.status')}</Label>
-                  <select
-                    className="mt-1 flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
-                    value={form.status}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        status: e.target.value as ListingFormState['status'],
-                      })
-                    }
-                  >
-                    <option value="DRAFT">{t('provider.listingStatus.DRAFT')}</option>
-                    <option value="ACTIVE">{t('provider.listingStatus.ACTIVE')}</option>
-                    <option value="PAUSED">{t('provider.listingStatus.PAUSED')}</option>
-                  </select>
-                </div>
-              )}
               <div className="flex gap-2">
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                   {t('common.save')}
@@ -468,89 +457,123 @@ export function ProviderListingsPage() {
             const incomplete = orderStats.active + orderStats.closed
 
             return (
-            <Card key={listing.id}>
-              <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
-                <div className="flex gap-3">
-                  {listing.image && (
-                    <img
-                      src={listing.image}
-                      alt={listing.title}
-                      className="h-20 w-28 shrink-0 rounded-md border border-border object-cover"
-                    />
-                  )}
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-semibold">{listing.title}</h3>
-                      <Badge variant={listingStatusBadgeVariant(listing.status)}>
-                        {t(`provider.listingStatus.${listing.status}`)}
-                      </Badge>
-                    </div>
-                    {listing.description && (
-                      <p className="mt-1 text-sm text-muted-foreground">{listing.description}</p>
+              <Card key={listing.id}>
+                <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
+                  <div className="flex gap-3">
+                    {listing.image && (
+                      <img
+                        src={listing.image}
+                        alt={listing.title}
+                        className="h-20 w-28 shrink-0 rounded-md border border-border object-cover"
+                      />
                     )}
-                    {listing.deliveryFee != null && (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t('provider.deliveryFee')}:{' '}
-                        {listing.deliveryFee.toLocaleString('ar-EG')} ج.م
-                      </p>
-                    )}
-                    {listing.link && (
-                      <a
-                        href={listing.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-1 inline-flex items-center gap-1 text-sm text-main underline"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        {listing.link}
-                      </a>
-                    )}
-                    {listing.menuItems && listing.menuItems.length > 0 && (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t('provider.listingMenuCount', { count: listing.menuItems.length })}
-                      </p>
-                    )}
-                    {orderStats.total > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Badge variant="default">
-                          {t('provider.listingOrdersCompleted', { count: orderStats.completed })}
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold">{listing.title}</h3>
+                        <Badge variant={listingStatusBadgeVariant(listing.status)}>
+                          {t(`provider.listingStatus.${listing.status}`)}
                         </Badge>
-                        <Badge variant="secondary">
-                          {t('provider.listingOrdersIncomplete', { count: incomplete })}
-                        </Badge>
-                        {orderStats.active > 0 && (
-                          <Badge variant="warning">
-                            {t('provider.listingOrdersActive', { count: orderStats.active })}
+                        {listing.isFeatured && listing.status === 'ACTIVE' && (
+                          <Badge variant="default">
+                            <Megaphone className="h-3 w-3" />
+                            {t('admin.listingFeatured')}
                           </Badge>
                         )}
                       </div>
+                      {listing.description && (
+                        <p className="mt-1 text-sm text-muted-foreground">{listing.description}</p>
+                      )}
+                      {listing.rejectionReason && listing.status === 'REJECTED' && (
+                        <Alert variant="destructive" className="mt-2 py-2">
+                          {t('provider.rejectionReason')}: {listing.rejectionReason}
+                        </Alert>
+                      )}
+                      {listing.status === 'PENDING_REVIEW' && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {t('provider.listingPendingReview')}
+                        </p>
+                      )}
+                      {listing.deliveryFee != null && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {t('provider.deliveryFee')}:{' '}
+                          {listing.deliveryFee.toLocaleString('ar-EG')} ج.م
+                        </p>
+                      )}
+                      {listing.link && (
+                        <a
+                          href={listing.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 text-sm text-main underline"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          {listing.link}
+                        </a>
+                      )}
+                      {listing.menuItems && listing.menuItems.length > 0 && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {t('provider.listingMenuCount', { count: listing.menuItems.length })}
+                        </p>
+                      )}
+                      {orderStats.total > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Badge variant="default">
+                            {t('provider.listingOrdersCompleted', { count: orderStats.completed })}
+                          </Badge>
+                          <Badge variant="secondary">
+                            {t('provider.listingOrdersIncomplete', { count: incomplete })}
+                          </Badge>
+                          {orderStats.active > 0 && (
+                            <Badge variant="warning">
+                              {t('provider.listingOrdersActive', { count: orderStats.active })}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {canEditListing(listing.status) && (
+                      <Button variant="outline" size="sm" onClick={() => openEdit(listing)}>
+                        <Pencil className="h-4 w-4" />
+                        {t('common.edit')}
+                      </Button>
+                    )}
+                    {canSubmitListing(listing.status) && (
+                      <Button
+                        size="sm"
+                        disabled={submitMutation.isPending}
+                        onClick={() => handleSubmitForReview(listing)}
+                      >
+                        <Send className="h-4 w-4" />
+                        {t('provider.submitListingForReview')}
+                      </Button>
+                    )}
+                    {canPauseListing(listing.status) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={statusMutation.isPending}
+                        onClick={() => togglePause(listing)}
+                      >
+                        {listing.status === 'ACTIVE'
+                          ? t('provider.pauseListing')
+                          : t('provider.resumeListing')}
+                      </Button>
+                    )}
+                    {listing.status !== 'PENDING_REVIEW' && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={deleteMutation.isPending}
+                        onClick={() => handleDelete(listing.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(listing)}>
-                    <Pencil className="h-4 w-4" />
-                    {t('common.edit')}
-                  </Button>
-                  <Button
-                    variant={listing.status === 'ACTIVE' ? 'outline' : 'default'}
-                    size="sm"
-                    disabled={statusMutation.isPending}
-                    onClick={() => toggleListingStatus(listing)}
-                  >
-                    {listingStatusActionLabel(listing.status, t)}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={deleteMutation.isPending}
-                    onClick={() => handleDelete(listing.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             )
           })}
         </div>

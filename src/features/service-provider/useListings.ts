@@ -8,7 +8,8 @@ export interface ListingMenuItemInput {
   id?: string
   name: string
   price: number
-  prepTimeMinutes?: number
+  prepTimeMinutes: number
+  sortOrder?: number
 }
 
 export interface CreateListingInput {
@@ -28,7 +29,6 @@ export interface UpdateListingInput {
   deliveryFee?: number
   link?: string
   metadata?: Record<string, unknown>
-  status?: ServiceListingStatus
   /** عند الإرسال يستبدل المنيو بالكامل؛ عند الغياب يبقى المنيو كما هو */
   menuItems?: ListingMenuItemInput[]
 }
@@ -36,20 +36,21 @@ export interface UpdateListingInput {
 /** @deprecated use CreateListingInput / UpdateListingInput */
 export type ListingInput = UpdateListingInput
 
-function serializeListingMenuItems(items: ListingMenuItemInput[]): string {
-  return JSON.stringify(
-    items.map((item) => {
-      const payload: Record<string, unknown> = {
-        name: item.name,
-        price: item.price,
-      }
-      if (item.prepTimeMinutes != null && item.prepTimeMinutes > 0) {
-        payload.prepTimeMinutes = item.prepTimeMinutes
-      }
-      if (item.id) payload.id = item.id
-      return payload
-    }),
-  )
+export function normalizeListingMenuItemsForApi(
+  items: ListingMenuItemInput[],
+): ListingMenuItemInput[] {
+  return items.map((item, index) => ({
+    ...(item.id ? { id: item.id } : {}),
+    name: item.name.trim(),
+    price: Number(item.price),
+    prepTimeMinutes: Number(item.prepTimeMinutes ?? 0),
+    sortOrder: item.sortOrder ?? index,
+  }))
+}
+
+function appendMenuItemsToForm(form: FormData, items: ListingMenuItemInput[]) {
+  const payload = normalizeListingMenuItemsForApi(items)
+  form.append('menuItems', JSON.stringify(payload))
 }
 
 function buildListingFormData(input: {
@@ -64,7 +65,9 @@ function buildListingFormData(input: {
 }): FormData {
   const form = new FormData()
   form.append('title', input.title)
-  if (input.image) form.append('image', input.image)
+  if (input.image instanceof File) {
+    form.append('image', input.image, input.image.name)
+  }
   if (input.description) form.append('description', input.description)
   if (input.deliveryFee !== undefined) {
     form.append('deliveryFee', String(input.deliveryFee))
@@ -75,7 +78,7 @@ function buildListingFormData(input: {
   }
   if (input.status) form.append('status', input.status)
   if (input.menuItems !== undefined) {
-    form.append('menuItems', serializeListingMenuItems(input.menuItems))
+    appendMenuItemsToForm(form, input.menuItems)
   }
   return form
 }
@@ -84,13 +87,12 @@ export function listingMenuItemsFromApi(
   items: ListingMenuItem[] | null | undefined,
 ): ListingMenuItemInput[] {
   if (!items?.length) return []
-  return items.map((item) => ({
+  return items.map((item, index) => ({
     ...(item.id ? { id: item.id } : {}),
     name: item.name,
     price: item.price,
-    ...(item.prepTimeMinutes != null && item.prepTimeMinutes > 0
-      ? { prepTimeMinutes: item.prepTimeMinutes }
-      : {}),
+    prepTimeMinutes: item.prepTimeMinutes ?? 0,
+    sortOrder: item.sortOrder ?? index,
   }))
 }
 
@@ -115,6 +117,9 @@ export function useCreateListing() {
   return useMutation({
     meta: toastMeta.created(),
     mutationFn: async (input: CreateListingInput) => {
+      if (!(input.image instanceof File)) {
+        throw new Error('Listing image must be a File')
+      }
       const { menuItems, ...rest } = input
       const formData = buildListingFormData({
         ...rest,
@@ -123,9 +128,7 @@ export function useCreateListing() {
       const { data } = await axios.post<{
         message: string
         listing: ServiceListing
-      }>('/provider/listings', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      }>('/provider/listings', formData)
       return data
     },
     onSuccess: () => {
@@ -141,19 +144,37 @@ export function useUpdateListingStatus() {
 
   return useMutation({
     meta: toastMeta.saved(),
-    mutationFn: async ({ id, status }: { id: string; status: ServiceListingStatus }) => {
+    mutationFn: async ({ id, status }: { id: string; status: 'ACTIVE' | 'PAUSED' }) => {
       const formData = new FormData()
       formData.append('status', status)
       const { data } = await axios.patch<{
         message: string
         listing: ServiceListing
-      }>(`/provider/listings/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      }>(`/provider/listings/${id}`, formData)
       return data
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['provider', 'listings'] })
+    },
+  })
+}
+
+export function useSubmitListing() {
+  const axios = useAxiosInstance()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    meta: toastMeta.saved(),
+    mutationFn: async (id: string) => {
+      const { data } = await axios.post<{
+        message: string
+        listing: ServiceListing
+      }>(`/provider/listings/${id}/submit`)
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['provider', 'listings'] })
+      void queryClient.invalidateQueries({ queryKey: ['provider', 'profile'] })
     },
   })
 }
@@ -169,9 +190,7 @@ export function useUpdateListing() {
       const { data } = await axios.patch<{
         message: string
         listing: ServiceListing
-      }>(`/provider/listings/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      }>(`/provider/listings/${id}`, formData)
       return data
     },
     onSuccess: () => {
