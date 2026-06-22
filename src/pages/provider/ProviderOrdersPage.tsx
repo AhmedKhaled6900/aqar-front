@@ -1,4 +1,4 @@
-import { Package } from 'lucide-react'
+import { Megaphone, Package, UtensilsCrossed } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Alert } from '@/components/ui/alert'
@@ -15,6 +15,7 @@ import {
   useUpdateOrderStatus,
 } from '@/features/service-provider/useProviderOrders'
 import { useCookies } from '@/lib/token-managament/useCookies'
+import { isOrderFromListing } from '@/lib/order-stats'
 import type { ServiceOrder, ServiceOrderStatus } from '@/lib/types'
 
 const PAGE_SIZE = 10
@@ -124,7 +125,10 @@ export function ProviderOrdersPage() {
       ) : data?.items.length ? (
         <>
           <div className="space-y-4">
-            {data.items.map((order) => (
+            {data.items.map((order) => {
+              const fromListing = isOrderFromListing(order)
+
+              return (
               <Card key={order.id}>
                 <CardContent className="p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -134,13 +138,28 @@ export function ProviderOrdersPage() {
                           #{order.id.slice(0, 8)}
                         </span>
                         <Badge>{t(`provider.orderStatus.${order.status}`)}</Badge>
+                        <Badge variant={fromListing ? 'secondary' : 'outline'}>
+                          {fromListing ? (
+                            <>
+                              <Megaphone className="h-3 w-3" />
+                              {t('provider.orderSourceListing')}
+                            </>
+                          ) : (
+                            <>
+                              <UtensilsCrossed className="h-3 w-3" />
+                              {t('provider.orderSourceMainMenu')}
+                            </>
+                          )}
+                        </Badge>
                       </div>
                       <p className="mt-1 font-medium">{order.customer.name}</p>
                       <p className="text-sm text-muted-foreground">
                         {order.customer.phone ?? order.customer.email}
                       </p>
-                      {order.listing && (
-                        <p className="text-sm">{order.listing.title}</p>
+                      {fromListing && order.listing && (
+                        <p className="text-sm font-medium text-main">
+                          {t('provider.listingTitle')}: {order.listing.title}
+                        </p>
                       )}
                       <p className="text-sm text-muted-foreground">
                         {order.deliveryCity}
@@ -235,7 +254,8 @@ export function ProviderOrdersPage() {
                   )}
                 </CardContent>
               </Card>
-            ))}
+              )
+            })}
           </div>
 
           {data.meta.totalPages > 1 && (

@@ -2,7 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { extractPaginatedItems } from '@/lib/api/pagination'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { toastMeta } from '@/lib/mutation-meta'
-import type { ServiceListing, ServiceListingStatus } from '@/lib/types'
+import type { ListingMenuItem, ServiceListing, ServiceListingStatus } from '@/lib/types'
+
+export interface ListingMenuItemInput {
+  id?: string
+  name: string
+  price: number
+  prepTimeMinutes?: number
+}
 
 export interface CreateListingInput {
   title: string
@@ -11,6 +18,7 @@ export interface CreateListingInput {
   deliveryFee?: number
   link?: string
   metadata?: Record<string, unknown>
+  menuItems?: ListingMenuItemInput[]
 }
 
 export interface UpdateListingInput {
@@ -21,10 +29,28 @@ export interface UpdateListingInput {
   link?: string
   metadata?: Record<string, unknown>
   status?: ServiceListingStatus
+  /** عند الإرسال يستبدل المنيو بالكامل؛ عند الغياب يبقى المنيو كما هو */
+  menuItems?: ListingMenuItemInput[]
 }
 
 /** @deprecated use CreateListingInput / UpdateListingInput */
 export type ListingInput = UpdateListingInput
+
+function serializeListingMenuItems(items: ListingMenuItemInput[]): string {
+  return JSON.stringify(
+    items.map((item) => {
+      const payload: Record<string, unknown> = {
+        name: item.name,
+        price: item.price,
+      }
+      if (item.prepTimeMinutes != null && item.prepTimeMinutes > 0) {
+        payload.prepTimeMinutes = item.prepTimeMinutes
+      }
+      if (item.id) payload.id = item.id
+      return payload
+    }),
+  )
+}
 
 function buildListingFormData(input: {
   title: string
@@ -34,6 +60,7 @@ function buildListingFormData(input: {
   link?: string
   metadata?: Record<string, unknown>
   status?: ServiceListingStatus
+  menuItems?: ListingMenuItemInput[]
 }): FormData {
   const form = new FormData()
   form.append('title', input.title)
@@ -47,7 +74,24 @@ function buildListingFormData(input: {
     form.append('metadata', JSON.stringify(input.metadata))
   }
   if (input.status) form.append('status', input.status)
+  if (input.menuItems !== undefined) {
+    form.append('menuItems', serializeListingMenuItems(input.menuItems))
+  }
   return form
+}
+
+export function listingMenuItemsFromApi(
+  items: ListingMenuItem[] | null | undefined,
+): ListingMenuItemInput[] {
+  if (!items?.length) return []
+  return items.map((item) => ({
+    ...(item.id ? { id: item.id } : {}),
+    name: item.name,
+    price: item.price,
+    ...(item.prepTimeMinutes != null && item.prepTimeMinutes > 0
+      ? { prepTimeMinutes: item.prepTimeMinutes }
+      : {}),
+  }))
 }
 
 export function useProviderListings() {
@@ -71,7 +115,11 @@ export function useCreateListing() {
   return useMutation({
     meta: toastMeta.created(),
     mutationFn: async (input: CreateListingInput) => {
-      const formData = buildListingFormData(input)
+      const { menuItems, ...rest } = input
+      const formData = buildListingFormData({
+        ...rest,
+        ...(menuItems?.length ? { menuItems } : {}),
+      })
       const { data } = await axios.post<{
         message: string
         listing: ServiceListing

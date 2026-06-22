@@ -522,6 +522,15 @@ export interface ServiceProviderProfile {
   counts?: { listings: number; orders: number; leads: number }
 }
 
+export interface ListingMenuItem {
+  id?: string
+  name: string
+  price: number
+  prepTimeMinutes?: number | null
+  sortOrder?: number
+}
+
+/** @deprecated use ListingMenuItem */
 export interface ServiceMenuItem {
   name: string
   price: number
@@ -548,12 +557,20 @@ export interface ServiceListing {
   status: ServiceListingStatus
   image?: string | null
   link?: string | null
-  menuItems: ServiceMenuItem[] | null
+  menuItems: ListingMenuItem[] | null
   /** سعر توصيل خاص بهذا الإعلان */
   deliveryFee?: number | null
   metadata?: Record<string, unknown> | null
+  orderStats?: ListingOrderStats
   createdAt?: string
   updatedAt?: string
+}
+
+export interface ListingOrderStats {
+  total: number
+  completed: number
+  active: number
+  closed: number
 }
 
 export interface ServiceOrderCustomer {
@@ -583,6 +600,7 @@ export interface ServiceOrder {
     notes?: string | null
   }>
   customer: ServiceOrderCustomer
+  listingId?: string | null
   listing?: { id: string; title: string } | null
   createdAt: string
   updatedAt?: string

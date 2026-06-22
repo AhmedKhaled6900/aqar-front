@@ -11,16 +11,27 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Spinner } from '@/components/ui/spinner'
 import {
+  listingMenuItemsFromApi,
   useCreateListing,
   useDeleteListing,
   useProviderListings,
   useUpdateListing,
   useUpdateListingStatus,
   type CreateListingInput,
+  type ListingMenuItemInput,
   type UpdateListingInput,
 } from '@/features/service-provider/useListings'
+import { useProviderOrderStatsByListing } from '@/features/service-provider/useProviderOrders'
 import { useConfirm } from '@/hooks/use-confirm'
-import type { ServiceListing, ServiceListingStatus } from '@/lib/types'
+import { emptyListingOrderStats } from '@/lib/order-stats'
+import type { ListingOrderStats, ServiceListing, ServiceListingStatus } from '@/lib/types'
+
+interface ListingMenuItemFormRow {
+  id?: string
+  name: string
+  price: string
+  prepTimeMinutes: string
+}
 
 interface ListingFormState {
   title: string
@@ -30,6 +41,12 @@ interface ListingFormState {
   metadata: Record<string, unknown>
   status: ServiceListingStatus
 }
+
+const emptyMenuRow = (): ListingMenuItemFormRow => ({
+  name: '',
+  price: '',
+  prepTimeMinutes: '',
+})
 
 const emptyForm = (): ListingFormState => ({
   title: '',
@@ -60,9 +77,42 @@ function listingStatusActionLabel(
   return t('provider.publishListing')
 }
 
+function buildMenuItemsPayload(rows: ListingMenuItemFormRow[]): ListingMenuItemInput[] {
+  return rows
+    .filter((row) => row.name.trim())
+    .map((row) => ({
+      ...(row.id ? { id: row.id } : {}),
+      name: row.name.trim(),
+      price: Number(row.price) || 0,
+      ...(row.prepTimeMinutes && Number(row.prepTimeMinutes) > 0
+        ? { prepTimeMinutes: Number(row.prepTimeMinutes) }
+        : {}),
+    }))
+}
+
+function menuRowsFromListing(listing: ServiceListing): ListingMenuItemFormRow[] {
+  const items = listingMenuItemsFromApi(listing.menuItems)
+  if (!items.length) return []
+  return items.map((item) => ({
+    ...(item.id ? { id: item.id } : {}),
+    name: item.name,
+    price: String(item.price),
+    prepTimeMinutes: item.prepTimeMinutes != null ? String(item.prepTimeMinutes) : '',
+  }))
+}
+
+function resolveListingOrderStats(
+  listing: ServiceListing,
+  statsMap?: Record<string, ListingOrderStats>,
+): ListingOrderStats {
+  if (listing.orderStats) return listing.orderStats
+  return statsMap?.[listing.id] ?? emptyListingOrderStats()
+}
+
 export function ProviderListingsPage() {
   const { t } = useTranslation()
   const { data: listings = [], isLoading } = useProviderListings()
+  const { data: orderStatsMap } = useProviderOrderStatsByListing()
   const createMutation = useCreateListing()
   const updateMutation = useUpdateListing()
   const statusMutation = useUpdateListingStatus()
@@ -72,16 +122,19 @@ export function ProviderListingsPage() {
   const [editing, setEditing] = useState<ServiceListing | null>(null)
   const [form, setForm] = useState<ListingFormState>(emptyForm())
   const [image, setImage] = useState<File | null>(null)
+  const [menuRows, setMenuRows] = useState<ListingMenuItemFormRow[]>([])
   const [error, setError] = useState('')
 
   const resetForm = () => {
     setForm(emptyForm())
     setImage(null)
+    setMenuRows([])
     setEditing(null)
   }
 
   const openCreate = () => {
     resetForm()
+    setMenuRows([emptyMenuRow()])
     setFormOpen(true)
     setError('')
   }
@@ -89,6 +142,7 @@ export function ProviderListingsPage() {
   const openEdit = (listing: ServiceListing) => {
     setEditing(listing)
     setImage(null)
+    setMenuRows(menuRowsFromListing(listing))
     setForm({
       title: listing.title,
       description: listing.description ?? '',
@@ -101,14 +155,18 @@ export function ProviderListingsPage() {
     setError('')
   }
 
-  const buildCreateInput = (): CreateListingInput => ({
-    title: form.title,
-    image: image!,
-    description: form.description || undefined,
-    deliveryFee: form.deliveryFee === '' ? undefined : Number(form.deliveryFee),
-    link: form.link || undefined,
-    metadata: form.metadata,
-  })
+  const buildCreateInput = (): CreateListingInput => {
+    const menuItems = buildMenuItemsPayload(menuRows)
+    return {
+      title: form.title,
+      image: image!,
+      description: form.description || undefined,
+      deliveryFee: form.deliveryFee === '' ? undefined : Number(form.deliveryFee),
+      link: form.link || undefined,
+      metadata: form.metadata,
+      ...(menuItems.length ? { menuItems } : {}),
+    }
+  }
 
   const buildUpdateInput = (): UpdateListingInput => ({
     title: form.title,
@@ -118,7 +176,22 @@ export function ProviderListingsPage() {
     link: form.link || undefined,
     metadata: form.metadata,
     status: form.status,
+    menuItems: buildMenuItemsPayload(menuRows),
   })
+
+  const addMenuRow = () => {
+    setMenuRows((rows) => [...rows, emptyMenuRow()])
+  }
+
+  const removeMenuRow = (index: number) => {
+    setMenuRows((rows) => rows.filter((_, i) => i !== index))
+  }
+
+  const updateMenuRow = (index: number, patch: Partial<ListingMenuItemFormRow>) => {
+    setMenuRows((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, ...patch } : row)),
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,6 +204,14 @@ export function ProviderListingsPage() {
 
     const fee = form.deliveryFee === '' ? undefined : Number(form.deliveryFee)
     if (fee !== undefined && (Number.isNaN(fee) || fee < 0)) {
+      setError(t('common.error'))
+      return
+    }
+
+    const invalidMenuRow = menuRows.find(
+      (row) => row.name.trim() && (Number.isNaN(Number(row.price)) || Number(row.price) < 0),
+    )
+    if (invalidMenuRow) {
       setError(t('common.error'))
       return
     }
@@ -269,6 +350,78 @@ export function ProviderListingsPage() {
                   placeholder="https://example.com/promo"
                 />
               </div>
+
+              <div className="space-y-3 rounded-lg border border-border p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <Label>{t('provider.listingMenu')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('provider.listingMenuDesc')}</p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={addMenuRow}>
+                    <Plus className="h-4 w-4" />
+                    {t('provider.addMenuItem')}
+                  </Button>
+                </div>
+                {menuRows.length ? (
+                  <div className="space-y-3">
+                    {menuRows.map((row, index) => (
+                      <div
+                        key={row.id ?? `new-${index}`}
+                        className="grid gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-[1fr_120px_120px_auto]"
+                      >
+                        <div>
+                          <Label className="text-xs">{t('provider.menuItemName')}</Label>
+                          <Input
+                            className="mt-1"
+                            value={row.name}
+                            onChange={(e) => updateMenuRow(index, { name: e.target.value })}
+                            placeholder={t('provider.menuItemName')}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">{t('provider.menuItemPrice')}</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.01}
+                            dir="ltr"
+                            className="mt-1"
+                            value={row.price}
+                            onChange={(e) => updateMenuRow(index, { price: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">{t('provider.prepTimeMinutes')}</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            dir="ltr"
+                            className="mt-1"
+                            value={row.prepTimeMinutes}
+                            onChange={(e) =>
+                              updateMenuRow(index, { prepTimeMinutes: e.target.value })
+                            }
+                            placeholder={t('provider.prepTimeOptional')}
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeMenuRow(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t('provider.noMenuItems')}</p>
+                )}
+              </div>
+
               {editing && (
                 <div>
                   <Label>{t('common.status')}</Label>
@@ -310,7 +463,11 @@ export function ProviderListingsPage() {
 
       {listings.length ? (
         <div className="space-y-3">
-          {listings.map((listing) => (
+          {listings.map((listing) => {
+            const orderStats = resolveListingOrderStats(listing, orderStatsMap)
+            const incomplete = orderStats.active + orderStats.closed
+
+            return (
             <Card key={listing.id}>
               <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
                 <div className="flex gap-3">
@@ -348,6 +505,26 @@ export function ProviderListingsPage() {
                         {listing.link}
                       </a>
                     )}
+                    {listing.menuItems && listing.menuItems.length > 0 && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {t('provider.listingMenuCount', { count: listing.menuItems.length })}
+                      </p>
+                    )}
+                    {orderStats.total > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge variant="default">
+                          {t('provider.listingOrdersCompleted', { count: orderStats.completed })}
+                        </Badge>
+                        <Badge variant="secondary">
+                          {t('provider.listingOrdersIncomplete', { count: incomplete })}
+                        </Badge>
+                        {orderStats.active > 0 && (
+                          <Badge variant="warning">
+                            {t('provider.listingOrdersActive', { count: orderStats.active })}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -374,7 +551,8 @@ export function ProviderListingsPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <p className="text-center text-muted-foreground">{t('provider.noListings')}</p>

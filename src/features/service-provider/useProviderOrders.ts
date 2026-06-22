@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { AxiosInstance } from 'axios'
 import { useMe } from '@/features/auth/useMe'
 import { useAxiosInstance } from '@/hooks/useAxiosInstance'
 import { normalizePaginatedResponse } from '@/lib/api/pagination'
+import { aggregateOrdersByListing } from '@/lib/order-stats'
 import { toastMeta } from '@/lib/mutation-meta'
 import type { PaginatedResponse, ServiceOrder, ServiceOrderStatus } from '@/lib/types'
 
@@ -31,6 +33,40 @@ export function useProviderOrders(filters: ProviderOrdersFilters = {}) {
   })
 }
 
+async function fetchAllProviderOrders(
+  axios: AxiosInstance,
+  filters: Omit<ProviderOrdersFilters, 'page' | 'limit'> = {},
+) {
+  const allOrders: ServiceOrder[] = []
+  let page = 1
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const { data } = await axios.get<PaginatedResponse<ServiceOrder>>('/provider/orders', {
+      params: { ...filters, page, limit: 100 },
+    })
+    const normalized = normalizePaginatedResponse<ServiceOrder>(data)
+    allOrders.push(...normalized.items)
+    hasNextPage = normalized.meta.hasNextPage
+    page += 1
+  }
+
+  return allOrders
+}
+
+export function useProviderOrderStatsByListing() {
+  const axios = useAxiosInstance()
+  const { data: me } = useMe()
+  const isProvider = me?.user.role === 'SERVICE_PROVIDER'
+
+  return useQuery({
+    queryKey: ['provider', 'orders', 'stats-by-listing'],
+    queryFn: async () => aggregateOrdersByListing(await fetchAllProviderOrders(axios)),
+    enabled: isProvider,
+    staleTime: 60_000,
+  })
+}
+
 export function useProviderPendingOrdersCount() {
   const { data: me } = useMe()
   const isProvider = me?.user.role === 'SERVICE_PROVIDER'
@@ -56,6 +92,7 @@ export function useAcceptOrder() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['provider', 'orders'] })
+      void queryClient.invalidateQueries({ queryKey: ['provider', 'orders', 'stats-by-listing'] })
       void queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] })
     },
   })
@@ -76,6 +113,7 @@ export function useRejectOrder() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['provider', 'orders'] })
+      void queryClient.invalidateQueries({ queryKey: ['provider', 'orders', 'stats-by-listing'] })
       void queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] })
     },
   })
@@ -102,6 +140,7 @@ export function useUpdateOrderStatus() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['provider', 'orders'] })
+      void queryClient.invalidateQueries({ queryKey: ['provider', 'orders', 'stats-by-listing'] })
       void queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] })
     },
   })
