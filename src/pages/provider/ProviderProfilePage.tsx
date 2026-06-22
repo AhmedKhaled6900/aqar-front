@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import {
   useProviderProfile,
   useSubmitProviderProfile,
+  useUpdateProviderLogo,
   useUpdateProviderProfile,
 } from '@/features/service-provider/useProviderProfile'
 import { useServiceCategories } from '@/features/service-provider/useServiceCategories'
@@ -20,6 +21,7 @@ export function ProviderProfilePage() {
   const { data: profile, isLoading, isError } = useProviderProfile()
   const { data: categories = [] } = useServiceCategories()
   const updateMutation = useUpdateProviderProfile()
+  const updateLogoMutation = useUpdateProviderLogo()
   const submitMutation = useSubmitProviderProfile()
   const [form, setForm] = useState({
     businessName: '',
@@ -60,7 +62,7 @@ export function ProviderProfilePage() {
       return
     }
     try {
-      await updateMutation.mutateAsync({ logo })
+      await updateLogoMutation.mutateAsync(logo)
       setLogo(null)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
@@ -87,8 +89,10 @@ export function ProviderProfilePage() {
     }
     try {
       await updateMutation.mutateAsync(form)
+      if (logo) {
+        await updateLogoMutation.mutateAsync(logo)
+      }
       await submitMutation.mutateAsync({
-        logo: logo ?? undefined,
         nationalId: nationalId ?? undefined,
         commercialRegister: commercialRegister ?? undefined,
       })
@@ -142,7 +146,7 @@ export function ProviderProfilePage() {
           <Button
             type="button"
             size="sm"
-            disabled={!logo || updateMutation.isPending}
+            disabled={!logo || updateLogoMutation.isPending}
             onClick={handleUpdateLogo}
           >
             {t('provider.updateLogo')}

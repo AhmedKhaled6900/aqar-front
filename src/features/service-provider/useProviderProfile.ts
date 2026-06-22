@@ -13,11 +13,9 @@ export interface CreateProviderProfileInput {
 
 export interface UpdateProviderProfileInput extends Partial<CreateProviderProfileInput> {
   menuDeliveryFee?: number
-  logo?: File
 }
 
 export interface SubmitProviderProfileInput {
-  logo?: File
   nationalId?: File
   commercialRegister?: File
 }
@@ -61,29 +59,33 @@ export function useUpdateProviderProfile() {
   return useMutation({
     meta: toastMeta.updated(),
     mutationFn: async (input: UpdateProviderProfileInput) => {
-      const { logo, ...rest } = input
-
-      if (logo) {
-        const formData = new FormData()
-        formData.append('logo', logo)
-        for (const [key, value] of Object.entries(rest)) {
-          if (value !== undefined && value !== null && value !== '') {
-            formData.append(key, String(value))
-          }
-        }
-        const { data } = await axios.patch<{
-          message: string
-          profile: ServiceProviderProfile
-        }>('/provider/profile', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        return data
-      }
-
       const { data } = await axios.patch<{
         message: string
         profile: ServiceProviderProfile
-      }>('/provider/profile', rest)
+      }>('/provider/profile', input)
+      return data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['provider', 'profile'] })
+    },
+  })
+}
+
+export function useUpdateProviderLogo() {
+  const axios = useAxiosInstance()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    meta: toastMeta.updated(),
+    mutationFn: async (logo: File) => {
+      const formData = new FormData()
+      formData.append('logo', logo)
+      const { data } = await axios.patch<{
+        message: string
+        profile: ServiceProviderProfile
+      }>('/provider/profile/logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return data
     },
     onSuccess: () => {
@@ -100,7 +102,6 @@ export function useSubmitProviderProfile() {
     meta: toastMeta.saved(),
     mutationFn: async (input: SubmitProviderProfileInput) => {
       const formData = new FormData()
-      if (input.logo) formData.append('logo', input.logo)
       if (input.nationalId) formData.append('nationalId', input.nationalId)
       if (input.commercialRegister) {
         formData.append('commercialRegister', input.commercialRegister)
