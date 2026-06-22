@@ -51,6 +51,22 @@ export function ProviderProfilePage() {
 
   const canEdit = profile?.status === 'DRAFT' || profile?.status === 'REJECTED'
   const canSubmitKyc = canEdit
+  const canUpdateLogo = profile?.status === 'APPROVED' || profile?.status === 'SUSPENDED' || canEdit
+
+  const handleUpdateLogo = async () => {
+    setError('')
+    if (!logo) {
+      setError(t('common.required'))
+      return
+    }
+    try {
+      await updateMutation.mutateAsync({ logo })
+      setLogo(null)
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } }
+      setError(axiosErr.response?.data?.message ?? t('common.error'))
+    }
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -101,6 +117,38 @@ export function ProviderProfilePage() {
         </Alert>
       )}
       {error && <Alert variant="destructive" className="mb-4">{error}</Alert>}
+
+      {canUpdateLogo && (
+        <div className="mb-6 space-y-3 rounded-lg border border-border bg-card p-4">
+          <Label>{t('provider.currentLogo')}</Label>
+          {profile?.logo ? (
+            <img
+              src={profile.logo}
+              alt={profile.businessName}
+              className="h-24 w-24 rounded-lg border border-border object-cover"
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">{t('common.noResults')}</p>
+          )}
+          <div>
+            <Label>{t('provider.logo')}</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              className="mt-1"
+              onChange={(e) => setLogo(e.target.files?.[0] ?? null)}
+            />
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            disabled={!logo || updateMutation.isPending}
+            onClick={handleUpdateLogo}
+          >
+            {t('provider.updateLogo')}
+          </Button>
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="space-y-4">
         <div>
@@ -166,15 +214,6 @@ export function ProviderProfilePage() {
 
         {canEdit && (
           <>
-            <div>
-              <Label>{t('provider.logo')}</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                className="mt-1"
-                onChange={(e) => setLogo(e.target.files?.[0] ?? null)}
-              />
-            </div>
             <div>
               <Label>{t('provider.nationalId')}</Label>
               <Input

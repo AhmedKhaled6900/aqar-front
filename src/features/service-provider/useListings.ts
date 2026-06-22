@@ -6,30 +6,48 @@ import type { ServiceListing, ServiceListingStatus } from '@/lib/types'
 
 export interface CreateListingInput {
   title: string
-  description: string
+  image: File
+  description?: string
   deliveryFee?: number
-  metadata: Record<string, unknown>
+  link?: string
+  metadata?: Record<string, unknown>
 }
 
-export interface UpdateListingInput extends CreateListingInput {
+export interface UpdateListingInput {
+  title: string
+  image?: File
+  description?: string
+  deliveryFee?: number
+  link?: string
+  metadata?: Record<string, unknown>
   status?: ServiceListingStatus
 }
 
 /** @deprecated use CreateListingInput / UpdateListingInput */
 export type ListingInput = UpdateListingInput
 
-export function buildCreateListingPayload(input: {
+function buildListingFormData(input: {
   title: string
+  image?: File
   description?: string
   deliveryFee?: number
+  link?: string
   metadata?: Record<string, unknown>
-}): CreateListingInput {
-  return {
-    title: input.title,
-    description: input.description ?? '',
-    deliveryFee: input.deliveryFee ?? 0,
-    metadata: input.metadata ?? {},
+  status?: ServiceListingStatus
+}): FormData {
+  const form = new FormData()
+  form.append('title', input.title)
+  if (input.image) form.append('image', input.image)
+  if (input.description) form.append('description', input.description)
+  if (input.deliveryFee !== undefined) {
+    form.append('deliveryFee', String(input.deliveryFee))
   }
+  if (input.link) form.append('link', input.link)
+  if (input.metadata && Object.keys(input.metadata).length > 0) {
+    form.append('metadata', JSON.stringify(input.metadata))
+  }
+  if (input.status) form.append('status', input.status)
+  return form
 }
 
 export function useProviderListings() {
@@ -53,10 +71,13 @@ export function useCreateListing() {
   return useMutation({
     meta: toastMeta.created(),
     mutationFn: async (input: CreateListingInput) => {
+      const formData = buildListingFormData(input)
       const { data } = await axios.post<{
         message: string
         listing: ServiceListing
-      }>('/provider/listings', input)
+      }>('/provider/listings', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return data
     },
     onSuccess: () => {
@@ -73,10 +94,14 @@ export function useUpdateListingStatus() {
   return useMutation({
     meta: toastMeta.saved(),
     mutationFn: async ({ id, status }: { id: string; status: ServiceListingStatus }) => {
+      const formData = new FormData()
+      formData.append('status', status)
       const { data } = await axios.patch<{
         message: string
         listing: ServiceListing
-      }>(`/provider/listings/${id}`, { status })
+      }>(`/provider/listings/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return data
     },
     onSuccess: () => {
@@ -92,15 +117,13 @@ export function useUpdateListing() {
   return useMutation({
     meta: toastMeta.updated(),
     mutationFn: async ({ id, ...input }: UpdateListingInput & { id: string }) => {
-      const { status, ...rest } = input
-      const payload = {
-        ...buildCreateListingPayload(rest),
-        ...(status !== undefined ? { status } : {}),
-      }
+      const formData = buildListingFormData(input)
       const { data } = await axios.patch<{
         message: string
         listing: ServiceListing
-      }>(`/provider/listings/${id}`, payload)
+      }>(`/provider/listings/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       return data
     },
     onSuccess: () => {

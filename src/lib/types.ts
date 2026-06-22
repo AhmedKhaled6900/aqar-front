@@ -546,6 +546,8 @@ export interface ServiceListing {
   title: string
   description: string | null
   status: ServiceListingStatus
+  image?: string | null
+  link?: string | null
   menuItems: ServiceMenuItem[] | null
   /** سعر توصيل خاص بهذا الإعلان */
   deliveryFee?: number | null

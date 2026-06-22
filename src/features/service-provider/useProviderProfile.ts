@@ -13,6 +13,7 @@ export interface CreateProviderProfileInput {
 
 export interface UpdateProviderProfileInput extends Partial<CreateProviderProfileInput> {
   menuDeliveryFee?: number
+  logo?: File
 }
 
 export interface SubmitProviderProfileInput {
@@ -60,10 +61,29 @@ export function useUpdateProviderProfile() {
   return useMutation({
     meta: toastMeta.updated(),
     mutationFn: async (input: UpdateProviderProfileInput) => {
+      const { logo, ...rest } = input
+
+      if (logo) {
+        const formData = new FormData()
+        formData.append('logo', logo)
+        for (const [key, value] of Object.entries(rest)) {
+          if (value !== undefined && value !== null && value !== '') {
+            formData.append(key, String(value))
+          }
+        }
+        const { data } = await axios.patch<{
+          message: string
+          profile: ServiceProviderProfile
+        }>('/provider/profile', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        return data
+      }
+
       const { data } = await axios.patch<{
         message: string
         profile: ServiceProviderProfile
-      }>('/provider/profile', input)
+      }>('/provider/profile', rest)
       return data
     },
     onSuccess: () => {
